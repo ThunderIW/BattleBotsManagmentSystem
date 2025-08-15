@@ -1,0 +1,255 @@
+
+import duckdb
+import sqlite3
+import polars as pl
+from duckdb.duckdb import cursor
+from tensorboard.compat.tensorflow_stub.errors import raise_exception_on_not_ok_status
+
+
+
+def create_Database_connect():
+    conn=sqlite3.connect('BattleBots.db')
+    return conn
+
+
+
+
+
+
+def delete_room_from_database(room_name):
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute("""
+        DELETE FROM Room
+        WHERE RoomName=?
+        
+        """,(room_name,))
+        conn.commit()
+        conn.close()
+
+    except sqlite3.Error as e:
+        return f"Error deleting room {e}"
+
+
+
+def delete_item_from_Database(item_name):
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute("""
+        DELETE FROM  Items
+        WHERE ItemName=?
+        """,(item_name,))
+        conn.commit()
+        conn.close()
+
+    except sqlite3.Error as e:
+        return f"Error deleting item {e}"
+
+
+
+
+def add_new_room_to_database(room_name,room_desc,Room_Image=None):
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute("""
+        INSERT INTO Room (RoomName,RoomDescription,Room_Image)
+        VALUES (?, ?,?)
+    """, (room_name,room_desc,Room_Image))
+        conn.commit()
+        conn.close()
+
+
+
+    except sqlite3.Error as e:
+        return f"Issue adding new room to database: {e} "
+
+def get_items_by_category(category,tags:list):
+    filter_item=[]
+    conn=create_Database_connect()
+    cursor=conn.cursor()
+
+    cursor.execute("""
+    SELECT * FROM
+    Items WHERE ItemCategory= ?
+    
+    """,(category,))
+    items=cursor.fetchall()
+    conn.close()
+
+    if len(tags)>0:
+        for item in items:
+            item_name = item[1]
+            item_desc=item[2]
+            for tag in tags:
+                if tag.lower() in item_name.lower() or tag.lower() in item_desc.lower():
+                    filter_item.append(item)
+
+        return filter_item
+
+    if len(tags)==0:
+        return items
+
+    return items
+
+def get_rooms():
+    room_list=[]
+    conn=create_Database_connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT RoomName FROM Room")
+    rooms = cursor.fetchall()
+    room_list = [room[0] for room in rooms]
+    conn.close()
+    return room_list
+
+
+
+def get_table_in_database():
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute("""
+        SELECT name
+        FROM sqlite_master
+        WHERE type='table' and name NOT LIKE 'sqlite_%'
+        """)
+        tables=cursor.fetchall()
+        table_list=[table[0] for table in tables]
+        conn.close()
+        return table_list
+    except sqlite3.Error as e:
+        return f"Error getting tables in database {e}"
+
+
+
+
+
+
+def item_Or_room_exists(mode,room=None,item=None):
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        if mode=='Item':
+            cursor.execute("""
+            SELECT ItemName FROM Items
+            WHERE ItemName=?
+            """,(item,))
+
+        if mode=="Room":
+            cursor.execute("""
+            SELECT RoomName FROM Room
+            WHERE RoomName=?
+            """,(room,))
+
+        result=cursor.fetchone()
+        conn.close()
+        return result is not None
+
+    except sqlite3.Error as e:
+        return f"Error deleting {mode} : {e}"
+
+def export_database_to_dataframe(table_name):
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute(f"SELECT * FROM `{table_name}`")
+
+        rows=cursor.fetchall()
+        conn.close()
+        col_names=[desc[0] for desc in cursor.description]
+        df=pl.DataFrame(rows,schema=col_names)
+        return df
+    except sqlite3.Error as e:
+        return f"Error: {e}"
+
+
+def update_item(itemDescription,ItemPrice):
+    conn=create_Database_connect()
+    cursor=conn.cursor()
+    cursor.execute("""
+    UPDATE Items 
+    SET ItemDescription=?,ItemPrice=? 
+    
+    """,(itemDescription,ItemPrice))
+
+def getRoomID(room_name):
+    conn=create_Database_connect()
+    cursor=conn.cursor()
+    cursor.execute("SELECT RoomID FROM Room WHERE RoomName = ?", (room_name,))
+    room_id = cursor.fetchone()
+    conn.close()
+    return room_id[0] if room_id else None
+
+
+def get_items():
+    conn=create_Database_connect()
+    cursor=conn.cursor()
+    cursor.execute("""
+    SELECT ItemName FROM Items
+    """)
+    items=cursor.fetchall()
+    items = [row[0] for row in items ]
+    return items
+
+
+def get_all_items_by_category(ItemCategory):
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute("""
+        SELECT ItemName,ItemDescription,ItemPrice,ItemQuanity,RoomName AS Item_Stroage_Location FROM Items I JOIN Room R on I.RoomLOCATIONStorageID=R.RoomId
+        WHERE I.ItemCategory=?
+        
+        """,(ItemCategory,))
+        items_by_category=cursor.fetchall()
+        columns_for_item_by_category=[desc[0] for desc in cursor.description]
+        df=pl.DataFrame(items_by_category,schema=columns_for_item_by_category,orient="row")
+        conn.close()
+        return df
+    except sqlite3.Error as e:
+        return f"Error retrieving items :{e}"
+
+
+def get_item_categories():
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute("""
+        SELECT DISTINCT ItemCategory FROM Items
+        """)
+        category = cursor.fetchall()
+        conn.close()
+        return [cat[0] for cat in category]
+
+
+    except sqlite3.Error as e:
+        return f"Error retrieving item categories: {e}"
+
+
+
+def insertNewItem(item_name,item_desc,item_price,item_category,room_Location_id:int,image,itemAmount):
+    conn=create_Database_connect()
+    cursor=conn.cursor()
+    cursor.execute("""
+    INSERT INTO Items (ItemName, ItemDescription, ItemPrice, ItemCategory,RoomLOCATIONStorageID,part_image,ItemQuanity)
+    VALUES (?, ?, ?, ?,?,?,?)
+    """, (item_name, item_desc, item_price, item_category,room_Location_id,image,itemAmount))
+    conn.commit()
+    conn.close()
+
+def get_item_details(item_name):
+    conn=create_Database_connect()
+    cursor=conn.cursor()
+    cursor.execute("""
+    SELECT ItemName, ItemDescription, ItemPrice, ItemCategory, RoomLOCATIONStorageID,part_image,ItemQuanity
+    FROM Items
+    WHERE ItemName = ?
+    """, (item_name,))
+    item_details = cursor.fetchone()
+    conn.close()
+    return item_details
+
+
+

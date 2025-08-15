@@ -1,0 +1,144 @@
+[theme]
+
+## The preset Streamlit theme that your custom theme inherits from.
+##
+## This can be one of the following: "light" or "dark".
+base = "dark"
+
+## Primary accent color.
+#primaryColor =
+
+## Background color of the app.
+#backgroundColor =
+
+## Background color used for most interactive widgets.
+#secondaryBackgroundColor =
+
+## Color used for almost all text.
+#textColor =
+
+## Color used for all links.
+#linkColor =
+
+## Whether or not links should be displayed with an underline.
+#linkUnderline =
+
+## Background color used for code blocks.
+#codeBackgroundColor =
+
+## The font family for all text, except code blocks.
+#font =
+
+## An array of fonts to use in your app.
+#fontFaces =
+
+## The root font size (in pixels) for the app.
+#baseFontSize =
+
+## The root font weight for the app.
+#baseFontWeight =
+
+## The font family to use for headings.
+#headingFont =
+
+## One or more font sizes for h1-h6 headings.
+#headingFontSizes =
+
+## One or more font weights for h1-h6 headings.
+#headingFontWeights =
+
+## The font family to use for code (monospace) in the sidebar.
+#codeFont =
+
+## The font size (in pixels or rem) for code blocks and code text.
+#codeFontSize =
+
+## The font weight for code blocks and code text.
+#codeFontWeight =
+
+## The radius used as basis for the corners of most UI elements.
+#baseRadius =
+
+## The radius used as basis for the corners of buttons.
+#buttonRadius =
+
+## The color of the border around elements.
+#borderColor =
+
+## The color of the border around dataframes and tables.
+#dataframeBorderColor =
+
+## The background color of the dataframe's header.
+#dataframeHeaderBackgroundColor =
+
+## Whether to show a border around input widgets.
+#showWidgetBorder =
+
+## Whether to show a vertical separator between the sidebar and the main content area.
+#showSidebarBorder =
+
+## An array of colors to use for categorical chart data.
+#chartCategoricalColors =
+
+## An array of ten colors to use for sequential or continuous chart data.
+#chartSequentialColors =
+
+
+#[theme.sidebar]
+
+## Primary accent color.
+#primaryColor =
+
+## Background color of the app.
+#backgroundColor =
+
+## Background color used for most interactive widgets.
+#secondaryBackgroundColor =
+
+## Color used for almost all text.
+#textColor =
+
+## Color used for all links.
+#linkColor =
+
+## Whether or not links should be displayed with an underline.
+#linkUnderline =
+
+## Background color used for code blocks.
+#codeBackgroundColor =
+
+## The font family for all text, except code blocks.
+#font =
+
+## The font family to use for headings.
+#headingFont =
+
+## One or more font sizes for h1-h6 headings.
+#headingFontSizes =
+
+## One or more font weights for h1-h6 headings.
+#headingFontWeights =
+
+## The font family to use for code (monospace) in the sidebar.
+#codeFont =
+
+## The font size (in pixels or rem) for code blocks and code text.
+#codeFontSize =
+
+## The radius used as basis for the corners of most UI elements.
+#baseRadius =
+
+## The radius used as basis for the corners of buttons.
+#buttonRadius =
+
+## The color of the border around elements.
+#borderColor =
+
+## The color of the border around dataframes and tables.
+#dataframeBorderColor =
+
+## The background color of the dataframe's header.
+#dataframeHeaderBackgroundColor =
+
+## Whether to show a border around input widgets.
+#showWidgetBorder =

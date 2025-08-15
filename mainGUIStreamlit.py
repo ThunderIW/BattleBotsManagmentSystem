@@ -1,0 +1,368 @@
+import sqlite3
+import streamlit as st
+import streamlit_authenticator  as stauth
+import streamlit_antd_components as sac
+import yaml
+from docutils.nodes import image
+from ipywidgets import Valid
+from pyasn1_modules.rfc5934 import id_ct_TAMP_statusQuery
+from streamlit import dataframe
+from yaml.loader import SafeLoader
+from streamlit_searchbox import st_searchbox
+import database_backend as db
+import time
+import polars as pl
+from pathlib import Path
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+with open("config.yaml", "r") as file:
+    config = yaml.load(file, Loader=SafeLoader)
+stauth.Hasher.hash_passwords(config['credentials'])
+
+authenticator = stauth.Authenticate(
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days']
+)
+
+st.logo(
+    image="BattleBotsLogo.png",size="large")
+st.title("Welcome to the BattleBots Management System")
+st.image(image="logo_40%.png")
+st.write("To access the database, please log in.")
+
+
+
+
+def returnItemNames(query:str):
+    conn=sqlite3.connect('BattleBots.db')
+    #print(query)
+    if not query:
+        return []
+    result= conn.execute(f"""
+    SELECT ItemName 
+    FROM Items
+    WHERE lower(ItemName) LIKE '%{query.lower()}%'
+    LIMIT 10
+    """).fetchall()
+
+    return [row[0] for row in result]
+
+
+try:
+    authenticator.login()
+    if st.session_state.get('authentication_status'):
+        st.write(f'Welcome *{st.session_state.get("name")}*')
+        tab1,tab2,tab3,tab4=st.tabs(["**View Items** 🔍 ", "**Add new Items or Delete Item** (➕/➖)", "**Update Items**","**Admin Page** 🖥️🔑"])
+        with tab1:
+            view_all_items_by_category=st.toggle("View all items by category")
+
+            if view_all_items_by_category:
+                chosen_category=st.selectbox("Please select which category you want to view",options=["","Screws","Battery","Wheels","ESC"])
+
+
+                if chosen_category:
+                    if chosen_category=="Screws":
+                        filter_tags = [
+                            "M1.6", "M2", "M2.5", "M3", "M4", "M5",
+                            "M6", "M8", "M10", "M12", "M14", "M16", "M20", "M24","Home Depot"
+                        ]
+                    if chosen_category=="Battery":
+                        filter_tags=["Lithium","NiMH","Li-ion","6S"]
+                    select_tags=st.multiselect("filter options",options=filter_tags,accept_new_options=True)
+
+
+
+                    category_items = db.get_items_by_category(chosen_category,select_tags)
+                    #print(category_items)
+
+
+                    for i in range(0,len(category_items)):
+                        item_name = category_items[i][1]
+                        item_desc = category_items[i][2]
+                        item_room_location=category_items[i][4]
+                        item_category=category_items[i][5]
+                        item_price = category_items[i][3]
+                        item_Pic = category_items[i][6]
+                        item_quantity=category_items[i][7]
+                        room_name = db.get_rooms()[item_room_location - 1] if item_room_location else "Unknown"
+
+                        with st.expander(label=f"{item_category}_{i+1}",expanded=True):
+                            if item_Pic is not None:
+                                st.image(item_Pic, width=200)
+                            st.write(f"**Item name**: {item_name}")
+                            st.write(f"**Item Description**: {item_desc}")
+                            st.write(f"**Item Price(CAD)**: {item_price}")
+                            st.write(f"**Item currently in stock**: {item_quantity}")
+                            st.write(f"**Room location**: {room_name}")
+
+                   
+            else:
+                st.subheader("View Items")
+                selected_item=st_searchbox(returnItemNames,placeholder="Search for an item",key="LookupItem")
+                if selected_item:
+                    item_name, item_desc, price, category, roomLocationID,ImageOfPart,ItemAmount=db.get_item_details(selected_item)
+                    if ImageOfPart is not None:
+                        st.image(ImageOfPart,width=200)
+
+                    with st.expander(expanded=True,label='Item'):
+                        st.write(f"**Item Name:** {item_name}")
+                        st.write(f"**Item Description:** {item_desc}")
+                        st.write(f"**Item Price:** CAD $ {price:.2f}")
+                        st.write(f"**Amount**: {ItemAmount}")
+                        st.write(f"**Item Category:** {category}")
+                        room_name = db.get_rooms()[roomLocationID-1] if roomLocationID else "Unknown"
+                        st.write(f"**Storage Location:** {room_name}")
+
+
+
+
+        with tab2:
+            on=st.toggle("Delete Item")
+
+            if on:
+                is_valid = True
+                Delete_type=st.selectbox(label="Please select what you want to delete",options=["","Room","Item"])
+                if Delete_type=="Item":
+                    items = db.get_items()
+                    item_to_delete_from_database=st.selectbox("Select the item",options=[""]+items)
+                    confirm_button=st.button(f"Delete {item_to_delete_from_database} ", type='primary')
+                    if confirm_button:
+                        if len(item_to_delete_from_database)==0:
+                            is_valid=False
+                            st.error(f"⚠️ Please select a Item to remove")
+
+                        if is_valid:
+                            db.delete_item_from_Database(item_to_delete_from_database)
+                            st.success(f"✅ {item_to_delete_from_database} has been successfully deleted")
+                            time.sleep(2.0)
+                            st.rerun()
+
+                if Delete_type=="Room":
+                    rooms=db.get_rooms()
+                    room_to_remove=st.selectbox(label="Please select which room you would like to remove",options=[""]+rooms)
+                    confirm_remove_room_button=st.button(f"Remove {room_to_remove} ",type="primary")
+                    if confirm_remove_room_button:
+                        if len(room_to_remove)==0:
+                            is_valid=False
+                            st.error("⚠️ Please select a room to remove")
+
+                        if is_valid:
+                            db.delete_room_from_database(room_to_remove)
+                            st.success(f"✅ {room_to_remove} has been successfully deleted")
+                            time.sleep(2.0)
+                            st.rerun()
+
+            else:
+                st.subheader("Please add a new item you want to the database")
+                with st.expander("✏️ Add New Items to database"):
+
+                    with st.form("Add new Item",clear_on_submit=True):
+                        rooms = db.get_rooms()
+                        item_Name=st.text_input("Item Name",key="item_name")
+                        item_desc=st.text_area("Item Description",key="item_description")
+                        item_price=st.number_input("Item Price",key="item_price",min_value=0.0,step=0.01)
+                        item_category=st.selectbox("Item Category",["","Screws","Battery","Wheels","ESC"],key="item_category")
+                        storageLocation=st.selectbox("Storage Location",key="storage_location",options=[""]+db.get_rooms())
+                        itemQuality=st.number_input("Please enter how many of the item you have",min_value=0,step=1)
+                        image= st.file_uploader("Upload an image of the item", type=["jpg", "jpeg", "png"], key="item_image")
+                        submitted = st.form_submit_button("Add Item",type="primary")
+
+
+                    if submitted:
+                        Valid = True
+                        room_id=db.getRoomID(storageLocation)
+                        if image is not None:
+                            image_data=image.read()
+                        if image is None:
+                            image_data=None
+
+
+                        itemInDatabaseCheck=db.item_Or_room_exists(mode="Item",item=item_Name)
+
+
+                        if len(item_Name)==0:
+                            Valid=False
+                            st.error("⚠️ **Error**: Please enter the items name")
+
+                        if itemQuality==0:
+                            Valid=False
+                            st.error("⚠️ **Error**: Please enter a Quantity greater than 0")
+
+                        if len(item_category)==0:
+                            Valid=False
+                            st.error("⚠️ **Error**: Please enter a Category")
+
+                        if len(storageLocation)==0:
+                            Valid=False
+                            st.error("⚠️ **Error**: Please select a Room")
+
+                        elif itemInDatabaseCheck:
+                            Valid = False
+                            st.error(f"{item_Name} already exist")
+
+                        if not itemInDatabaseCheck and Valid:
+                            db.insertNewItem(item_Name, item_desc, item_price, item_category, room_id, image_data, itemQuality)
+                            st.success(f"{item_Name} has been added to database")
+                            time.sleep(2.0)
+                            st.rerun()
+
+                        time.sleep(3.0)
+                        st.rerun()
+
+                with st.expander("🏢 Add a new room location"):
+                    with st.form("Add new room to database"):
+                        room_name=st.text_input("Room name",key="RoomName")
+                        room_desc=st.text_area("Room Description",key="RoomDesc")
+                        room_image = st.file_uploader("Upload an image of the item", type=["jpg", "jpeg", "png"],
+                                                 key="Room_image")
+                        room_submitted = st.form_submit_button("Add Item", type="primary")
+
+                        if room_submitted:
+                            Valid = True
+                            if room_image:
+                                room_image_data=room_image.read()
+                            if room_image is None:
+                                room_image_data=None
+
+                            itemInDatabaseCheck = db.item_Or_room_exists(mode="Room", room=room_name)
+
+
+                            if len(room_name)==0:
+                                Valid=False
+                                st.error("⚠️ **Error**: Please enter the room Name")
+
+
+
+                            if len(room_desc)==0:
+                                Valid=False
+                                st.error("⚠️ **Error**: Please enter the room's Description")
+
+
+                            elif itemInDatabaseCheck:
+                                Valid=False
+                                st.error(f"{room_name} already exist")
+
+
+                            if not itemInDatabaseCheck and Valid==True:
+                                db.add_new_room_to_database(room_name, room_desc,room_image_data)
+
+                            time.sleep(2.0)
+                            st.rerun()
+
+        with tab3:
+            st.subheader("Update items in the database")
+
+            with st.form("Update Item"):
+                item_to_update=st.selectbox("Item Name to Update",key="update_item_name",options=[""]+db.get_items())
+                new_desc=st.text_area("New Item Description",key="update_item_description")
+                new_price=st.number_input("New Item Price",key="update_item_price",min_value=0.0,step=0.01)
+                #new_category=st.selectbox("New Item Category",["","Screws","Battery","Wheels","ESC"],key="update_item_category")
+                submitted_update = st.form_submit_button("Update Item",type="primary")
+                if submitted_update:
+                    db.update_item(new_price,new_desc)
+                    time.sleep(2.0)
+                    st.success()
+                    st.rerun()
+
+        with tab4:
+
+            tables = db.get_table_in_database()
+            st.subheader("Admin Page")
+            with st.expander("Download tables to csv file"):
+                download_specific_category = st.toggle("Download csv file of specific item by category")
+
+                if download_specific_category:
+                    st.subheader("Download Category Mode")
+                    item_category=db.get_item_categories()
+                    item_category_to_download=st.selectbox(label="Chose which category you want to download",options=[""]+item_category)
+
+                    if len(item_category_to_download)>0 :
+                       #get_items_button = st.button(f"Get all items from {item_category_to_download}")
+                        #if get_items_button:
+                        items_for_cat=db.get_all_items_by_category(item_category_to_download)
+                        st.dataframe(items_for_cat)
+                        st.download_button(label=f"📥 Download all items from  {item_category_to_download} Category",file_name=f"{item_category_to_download}_items.csv",data=items_for_cat.write_csv(),
+                                               mime="text/xlsx",type="primary")
+
+
+                else:
+                    st.subheader(" Download Table Mode")
+                    table_to_view = st.selectbox(label="Chose which table to view",options=[""]+tables)
+                    if table_to_view:
+                        table_as_dataframe = db.export_database_to_dataframe(table_to_view)
+                        st.dataframe(table_as_dataframe, use_container_width=True, hide_index=True)
+                        psd=table_as_dataframe.write_csv()
+                        st.download_button(label=f"📥 Download {table_to_view} to csv ", data=psd,
+                                    file_name=f'{str(table_to_view).lower().capitalize()}.csv', mime='text/xlsx',
+                                    type="primary")
+            with st.expander("Upload csv file or download template"):
+                template_to_download=st.selectbox("Please select which template you would like to download",options=[""]+tables)
+                if template_to_download:
+                    template_path=Path(f'Template/{template_to_download}_template.csv')
+                    csv_bytes=template_path.read_bytes()
+                    st.download_button(label=f"📥 Download template for {template_to_download} table",file_name="Items_template.csv", mime='text/xlsx',data=csv_bytes,type="primary")
+                csv_file=st.file_uploader(label="Please upload the csv file",type=['csv'],accept_multiple_files=False)
+                upload_button=st.button("Upload")
+
+                if upload_button and csv_file is not None:
+                    table_name=str(csv_file.name).split('.')[0]
+                    upload_file_to_dataframe=pl.read_csv(source=csv_file).to_pandas()
+
+                    try:
+                        conn=db.create_Database_connect()
+                        upload_file_to_dataframe.to_sql(table_name,conn,if_exists='replace',index=False)
+                        conn.commit()
+
+
+
+
+                    except Exception as e:
+                        print(f"Upload issue {e}")
+
+
+                    finally:
+                        conn.close()
+                        st.success(f"{csv_file.name} has been successfully uploaded")
+                        time.sleep(0.5)
+                        st.rerun()
+
+
+
+
+
+
+
+
+        authenticator.logout()
+        with open('config.yaml', 'w') as file:
+            yaml.dump(config, file, default_flow_style=False, allow_unicode=True)
+
+
+    elif st.session_state.get('authentication_status') is False:
+        st.error('Username/password is incorrect')
+    elif st.session_state.get('authentication_status') is None:
+        st.warning('Please enter your username and password')
+
+    with open('../config.yaml', 'w') as file:
+        yaml.dump(config, file, default_flow_style=False, allow_unicode=True)
+
+
+except Exception as e:
+    st.error(e)
+
+
+
