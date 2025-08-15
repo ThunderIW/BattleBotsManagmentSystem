@@ -2,15 +2,19 @@ import sqlite3
 import streamlit as st
 import streamlit_authenticator  as stauth
 import yaml
+from docutils.nodes import label
 from yaml.loader import SafeLoader
 from streamlit_searchbox import st_searchbox
 import database_backend as db
 import time
 import polars as pl
 from pathlib import Path
+from encrypt_file import decrypt
+import streamlit_shadcn_ui as ui
 
-with open("config.yaml", "r") as file:
-    config = yaml.load(file, Loader=SafeLoader)
+login_file=decrypt()
+#with open(login_file, "r") as file:
+config = yaml.load(login_file, Loader=SafeLoader)
 stauth.Hasher.hash_passwords(config['credentials'])
 
 authenticator = stauth.Authenticate(
@@ -26,6 +30,17 @@ st.title("Welcome to the BattleBots Management System")
 st.image(image="logo_images/Logo_40.png")
 st.write("To access the database, please log in.")
 
+
+@st.dialog("Confirm your table you want to delete")
+def confirm(table):
+    st.write(f"Do you want to clear {table}")
+    if st.button("YES"):
+        st.session_state.confirm={'confirm':'YES'}
+        st.rerun()
+
+    if st.button("NO"):
+        st.session_state.confirm = {'confirm': 'NO'}
+        st.rerun()
 
 
 
@@ -312,6 +327,9 @@ try:
 
 
 
+
+
+
                     except Exception as e:
                         print(f"Upload issue {e}")
 
@@ -321,6 +339,35 @@ try:
                         st.success(f"{csv_file.name} has been successfully uploaded")
                         time.sleep(0.5)
                         st.rerun()
+
+            with st.expander("Clear Table info"):
+                choice=st.selectbox("Please select which table you want to clear",options=[""]+db.get_table_in_database())
+                if len(choice)>0:
+                    delete=st.toggle("Delete")
+                    if delete:
+                        delete_button=st.button(f"Delete {choice}",type='primary')
+                        if delete_button:
+                            db.delete_everything_from_database(choice)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

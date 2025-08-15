@@ -12,6 +12,23 @@ def create_Database_connect():
 
 
 
+def delete_everything_from_database(database=""):
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute("""
+        DELETE FROM ?
+        """,(database,))
+
+        conn.commit()
+        conn.close()
+
+    except sqlite3.Error as e:
+        return f"error delete rows from database: {e}"
+
+
+
+
 
 
 def delete_room_from_database(room_name):
