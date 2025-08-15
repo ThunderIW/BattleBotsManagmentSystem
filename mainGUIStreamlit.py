@@ -9,19 +9,6 @@ import time
 import polars as pl
 from pathlib import Path
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 with open("config.yaml", "r") as file:
     config = yaml.load(file, Loader=SafeLoader)
 stauth.Hasher.hash_passwords(config['credentials'])
@@ -34,9 +21,9 @@ authenticator = stauth.Authenticate(
 )
 
 st.logo(
-    image="BattleBotsLogo.png",size="large")
+    image="logo_images/BattleBotsLogo.png",size="large")
 st.title("Welcome to the BattleBots Management System")
-st.image(image="logo_40%.png")
+st.image(image="logo_images/Logo_40.png")
 st.write("To access the database, please log in.")
 
 
