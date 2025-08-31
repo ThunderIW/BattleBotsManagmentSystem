@@ -3,7 +3,7 @@ from cryptography.fernet import Fernet
 import os
 from dotenv import load_dotenv
 
-
+load_dotenv()
 def encrypting():
     key=Fernet.generate_key()
     with open('secret.key','wb') as key_file:
@@ -20,9 +20,7 @@ def encrypting():
 
 
 def decrypt():
-    load_dotenv()
-
-    key=os.getenv('SECRET_KEY')
+    key=os.getenv("SECRET_KEY")
     #with open('secret.key',"rb") as key_file:
     #    key=key_file.read()
 
