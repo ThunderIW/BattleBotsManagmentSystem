@@ -1,5 +1,7 @@
 import yaml
 from cryptography.fernet import Fernet
+import os
+from dotenv import load_dotenv
 
 
 def encrypting():
@@ -19,10 +21,13 @@ def encrypting():
 
 
 def decrypt():
-    with open('secret.key',"rb") as key_file:
-        key=key_file.read()
+    load_dotenv()
 
-    with open("config.yaml.enc") as f:
+    key=os.getenv('SECRET_KEY')
+    #with open('secret.key',"rb") as key_file:
+    #    key=key_file.read()
+
+    with open("config.yaml.enc","rb") as f:
         encrypt_data=f.read()
 
     fernet=Fernet(key)
