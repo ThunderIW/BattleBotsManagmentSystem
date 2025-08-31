@@ -2,7 +2,6 @@ import sqlite3
 import streamlit as st
 import streamlit_authenticator  as stauth
 import yaml
-from docutils.nodes import label
 from yaml.loader import SafeLoader
 from streamlit_searchbox import st_searchbox
 import database_backend as db
