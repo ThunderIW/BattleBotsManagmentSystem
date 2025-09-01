@@ -1,17 +1,4 @@
 import streamlit as st
-import yt_dlp
-
-
-def get_info_about_Video(youtube_link):
-    ydl_opts = {
-        'quiet': True,
-        'skip_download': True,
-        'extract_flat': True
-    }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info=ydl.extract_info(youtube_link, download=False)
-        video_title = info.get('title', 'N/A')
-    return video_title
 
 
 
