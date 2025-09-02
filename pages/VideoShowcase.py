@@ -2,14 +2,27 @@ import streamlit as st
 
 
 
-
+st.logo(
+    image="logo_images/BattleBotsLogo.png",size="large")
 st.title("Video Showcase")
 st.header("A collection of videos demonstrating battlebots in action")
 st.subheader("Battlebots in Action")
 
+
+
+
 video_choice=st.selectbox("Select a video to watch", options=["","Kilobots 57"])
 
 if video_choice=="Kilobots 57":
+    st.write(
+        """
+        Here are some of our current robots that participated in Kilobots 57:
+        - **Ice licker**: an Antweight custom 1LB Vert robot.
+        - **Patrix**: A custom 3LB Horizontal spinner robot. 
+        - **Fedykin**: 
+
+        """)
+
     with st.expander("Kilobots video showcase",expanded=True):
         st.video("https://www.youtube.com/watch?v=NKSgKOJAA-k",loop=True)
 
