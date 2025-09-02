@@ -46,12 +46,7 @@ for i, member in enumerate(team_members):
         st.write(member["bio"])
 
 
-st.header("Battlebot showcase")
-
-
-
-
-
+st.header("🤖 Battlebot showcase ")
 st.write(
     """
     Here are some of our current robots:
