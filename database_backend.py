@@ -87,17 +87,19 @@ def get_items_by_category(category,tags:list):
     cursor=conn.cursor()
 
     cursor.execute("""
-    SELECT * FROM
-    Items WHERE ItemCategory= ?
+    SELECT ItemName,ItemDescription,ItemPrice,ItemQuanity,RoomName AS Item_Stroage_Location,part_image FROM
+    Items I JOIN Room R on I.RoomLOCATIONStorageID=R.RoomId WHERE I.ItemCategory= ?
     
     """,(category,))
     items=cursor.fetchall()
     conn.close()
 
+
+
     if len(tags)>0:
         for item in items:
-            item_name = item[1]
-            item_desc=item[2]
+            item_name = item[0]
+            item_desc=item[1]
             for tag in tags:
                 if tag.lower() in item_name.lower() or tag.lower() in item_desc.lower():
                     filter_item.append(item)
@@ -214,11 +216,12 @@ def get_all_items_by_category(ItemCategory):
         conn=create_Database_connect()
         cursor=conn.cursor()
         cursor.execute("""
-        SELECT ItemName,ItemDescription,ItemPrice,ItemQuanity,RoomName AS Item_Stroage_Location FROM Items I JOIN Room R on I.RoomLOCATIONStorageID=R.RoomId
+        SELECT ItemName,ItemDescription,ItemPrice,ItemQuanity,RoomName AS Item_Stroage_Location,part_image FROM Items I JOIN Room R on I.RoomLOCATIONStorageID=R.RoomId
         WHERE I.ItemCategory=?
         
         """,(ItemCategory,))
         items_by_category=cursor.fetchall()
+        print(items_by_category)
         columns_for_item_by_category=[desc[0] for desc in cursor.description]
         df=pl.DataFrame(items_by_category,schema=columns_for_item_by_category,orient="row")
         conn.close()
