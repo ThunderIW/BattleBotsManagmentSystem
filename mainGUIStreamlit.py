@@ -11,6 +11,23 @@ from pathlib import Path
 from encrypt_file import decrypt
 import streamlit_shadcn_ui as ui
 
+
+
+
+def display_items(category_items,chosen_category,selected_tags):
+    for idx,item in enumerate(category_items):
+        item_name,item_desc,price,stock,item_loc,ImageOfPart=item
+        with st.expander(f"{chosen_category}_{idx+1}",expanded=True):
+            if ImageOfPart is not None:
+                st.image(ImageOfPart,width=200)
+            st.write(f"**Item Name:** {str(item_name).capitalize()}")
+            st.write(f"**Item Description:** {item_desc}")
+            st.write(f"**Item Price:** CAD $ {price:.2f}")
+            st.write(f"**Currently in stock**: {stock}")
+            st.write(f"**Storage Location:** {item_loc}")
+
+
+
 login_file=decrypt()
 #with open(login_file, "r") as file:
 config = yaml.load(login_file, Loader=SafeLoader)
@@ -80,30 +97,21 @@ try:
                         filter_tags=["Lithium","NiMH","Li-ion","6S"]
                     select_tags=st.multiselect("filter options",options=filter_tags,accept_new_options=True)
 
-
-
                     category_items = db.get_items_by_category(chosen_category,select_tags)
-                    #print(category_items)
 
 
-                    for i in range(0,len(category_items)):
-                        item_name = category_items[i][1]
-                        item_desc = category_items[i][2]
-                        item_room_location=category_items[i][4]
-                        item_category=category_items[i][5]
-                        item_price = category_items[i][3]
-                        item_Pic = category_items[i][6]
-                        item_quantity=category_items[i][7]
-                        room_name = db.get_rooms()[item_room_location - 1] if item_room_location else "Unknown"
+                    if len(category_items)==0 and len(select_tags)>0:
+                        st.warning(f"⚠️ No items found in the {chosen_category} category with the selected tags")
 
-                        with st.expander(label=f"{item_category}_{i+1}",expanded=True):
-                            if item_Pic is not None:
-                                st.image(item_Pic, width=200)
-                            st.write(f"**Item name**: {item_name}")
-                            st.write(f"**Item Description**: {item_desc}")
-                            st.write(f"**Item Price(CAD)**: {item_price}")
-                            st.write(f"**Item currently in stock**: {item_quantity}")
-                            st.write(f"**Room location**: {room_name}")
+                    elif len(category_items)==0 and len(select_tags)==0:
+                        st.warning(f"⚠️ No items found in the {chosen_category} category")
+
+
+                    display_items(category_items,chosen_category,select_tags)
+
+
+
+
 
                    
             else:
