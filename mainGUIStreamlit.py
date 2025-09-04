@@ -95,7 +95,7 @@ try:
                         filter_tags=["Lithium","NiMH","Li-ion","6S"]
 
                     select_tags=st.multiselect("filter options",options=filter_tags)
-                    select_tags_2=st.multiselect("Add more filter options",options=filter_tags,accept_new_options=True)
+
 
                     category_items = db.get_items_by_category(chosen_category,select_tags)
 
