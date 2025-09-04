@@ -1,15 +1,10 @@
-
 import sqlite3
 import polars as pl
-
-
 
 
 def create_Database_connect():
     conn=sqlite3.connect('BattleBots.db')
     return conn
-
-
 
 
 def delete_everything_from_database(database=""):
@@ -25,9 +20,6 @@ def delete_everything_from_database(database=""):
 
     except sqlite3.Error as e:
         return f"error delete rows from database: {e}"
-
-
-
 
 
 

@@ -12,8 +12,6 @@ from encrypt_file import decrypt
 import streamlit_shadcn_ui as ui
 
 
-
-
 def display_items(category_items,chosen_category,selected_tags):
     for idx,item in enumerate(category_items):
         item_name,item_desc,price,stock,item_loc,ImageOfPart=item
@@ -95,7 +93,9 @@ try:
                         ]
                     if chosen_category=="Battery":
                         filter_tags=["Lithium","NiMH","Li-ion","6S"]
-                    select_tags=st.multiselect("filter options",options=filter_tags,accept_new_options=True)
+
+                    select_tags=st.multiselect("filter options",options=filter_tags)
+                    select_tags_2=st.multiselect("Add more filter options",options=filter_tags,accept_new_options=True)
 
                     category_items = db.get_items_by_category(chosen_category,select_tags)
 
@@ -108,8 +108,6 @@ try:
 
 
                     display_items(category_items,chosen_category,select_tags)
-
-
 
 
 
@@ -355,30 +353,6 @@ try:
                         delete_button=st.button(f"Delete {choice}",type='primary')
                         if delete_button:
                             db.delete_everything_from_database(choice)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
