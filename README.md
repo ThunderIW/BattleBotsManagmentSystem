@@ -15,6 +15,7 @@ parts and costs
 ## 🚀 Features
 - **Inventory Management**: log, categorize, and update parts with
   - Item name, description, cost, quantity, and storage location
+  - ⬆️ Uploading a CSV file for a  streamlined upload process 
 - 👥 **Team Collaboration**: streamline how parts are shared and tracked within the team
 - 🖥️ **Streamlit-based GUI**: fast, interactive interface with search, filters, and expanders
 - **Video showcase**: This is a page that showcase the different fights that the club has gone to  
