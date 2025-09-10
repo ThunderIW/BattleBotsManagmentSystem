@@ -7,9 +7,19 @@ from streamlit_searchbox import st_searchbox
 import database_backend as db
 import time
 import polars as pl
+import pandas as pd
 from pathlib import Path
 from encrypt_file import decrypt
 import streamlit_shadcn_ui as ui
+
+
+
+def reterive_categories_as_datafrfame():
+    conn=sqlite3.connect('BattleBots.db')
+    df=pd.read_sql_query("SELECT * FROM Category",conn)
+    return df
+
+
 
 
 def display_items(category_items,chosen_category,selected_tags):
@@ -345,6 +355,9 @@ try:
                         time.sleep(0.5)
                         st.rerun()
             with st.expander("Add new Category"):
+
+                category_df=reterive_categories_as_datafrfame()
+                st.dataframe(category_df,use_container_width=True,hide_index=True)
                 category_submit_valid=True
                 with st.form("Add new Category to database",clear_on_submit=True):
                     category_name=st.text_input("Please enter the new category you want to add").capitalize()
