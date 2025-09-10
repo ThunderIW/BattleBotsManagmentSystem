@@ -7,6 +7,37 @@ def create_Database_connect():
     return conn
 
 
+
+def get_category_from_database():
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute("""
+        SELECT category_name FROM Category
+        """)
+        items = cursor.fetchall()
+        item_list=[item[0] for item in items]
+        conn.close()
+        return item_list
+    except sqlite3.Error as e:
+        return f"Error retrieving categories from database: {e}"
+
+
+
+def insert_new_category(category_name):
+    try:
+        conn = create_Database_connect()
+        cursor = conn.cursor()
+        cursor.execute("""
+              INSERT INTO Category(category_name) 
+              VALUES (?)
+          """, (category_name,))
+        conn.commit()
+        conn.close()
+    except sqlite3.Error as e:
+        return f"Issue adding new category to database: {e} "
+
+
 def delete_everything_from_database(database=""):
     try:
         conn=create_Database_connect()
