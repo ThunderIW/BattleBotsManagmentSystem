@@ -16,7 +16,7 @@ import streamlit_shadcn_ui as ui
 
 def reterive_categories_as_datafrfame():
     conn=sqlite3.connect('BattleBots.db')
-    df=pd.read_sql_query("SELECT * FROM Category",conn)
+    df=pd.read_sql_query("SELECT category_name as Category FROM Category",conn)
     return df
 
 
