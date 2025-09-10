@@ -177,7 +177,7 @@ try:
                         item_Name=st.text_input("Item Name",key="item_name")
                         item_desc=st.text_area("Item Description",key="item_description")
                         item_price=st.number_input("Item Price",key="item_price",min_value=0.0,step=0.01)
-                        item_category=st.selectbox("Item Category",["","Screws","Battery","Wheels","ESC"],key="item_category")
+                        item_category=st.selectbox("Item Category",options=[""]+db.get_category_from_database(),key="item_category")
                         storageLocation=st.selectbox("Storage Location",key="storage_location",options=[""]+db.get_rooms())
                         itemQuality=st.number_input("Please enter how many of the item you have",min_value=0,step=1)
                         image= st.file_uploader("Upload an image of the item", type=["jpg", "jpeg", "png"], key="item_image")
@@ -344,6 +344,44 @@ try:
                         st.success(f"{csv_file.name} has been successfully uploaded")
                         time.sleep(0.5)
                         st.rerun()
+            with st.expander("Add new Category"):
+                category_submit_valid=True
+                with st.form("Add new Category to database",clear_on_submit=True):
+                    category_name=st.text_input("Please enter the new category you want to add").capitalize()
+                    submit_new_category=st.form_submit_button("Add Category", type="primary")
+
+                    if submit_new_category:
+                        if len(category_name)==0:
+                            category_submit_valid=False
+                            st.error("⚠️ Please enter a category name")
+                            time.sleep(1.5)
+                            st.rerun()
+
+                        if category_name in db.get_category_from_database():
+                            category_submit_valid=False
+                            st.error(f"⚠️ {category_name} Category already exist in the database")
+                            time.sleep(1.5)
+                            st.rerun()
+
+                        if category_submit_valid:
+                            print(db.insert_new_category(category_name))
+                            st.success(f"✅ {category_name} has been successfully added to the database")
+                            time.sleep(1.5)
+                            st.rerun()
+
+
+
+
+
+                            #db.insert_new_category(category_name.capitalize())
+                            #st.success(f"✅ {category_name} has been successfully added to the database")
+                            #time.sleep(1.5)
+                            #st.rerun()
+
+
+
+
+
 
             with st.expander("Clear Table info"):
                 choice=st.selectbox("Please select which table you want to clear",options=[""]+db.get_table_in_database())
