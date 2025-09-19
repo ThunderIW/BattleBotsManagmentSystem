@@ -14,10 +14,18 @@ import streamlit_shadcn_ui as ui
 
 
 
-def reterive_categories_as_datafrfame():
+def reterive_categories_as_datafrfame(retrive_column="cat", category_name=""):
     conn=sqlite3.connect('BattleBots.db')
-    df=pd.read_sql_query("SELECT category_name as Category FROM Category",conn)
-    return df
+
+    if retrive_column=='cat':
+        df=pd.read_sql_query("SELECT category_name as Category FROM Category",conn)
+        return df
+
+    if retrive_column=='tags':
+        df=pd.read_sql_query(f"SELECT Item_filter_tags as tags FROM Category WHERE category_name='{category_name}' ",conn)
+        return df
+
+    return "Nothing"
 
 
 
@@ -354,33 +362,44 @@ try:
                         st.success(f"{csv_file.name} has been successfully uploaded")
                         time.sleep(0.5)
                         st.rerun()
-            with st.expander("Add new Category"):
+            with st.expander("Add new Category or item filter tags"):
+                item_filter_toggle=st.toggle("Add item filter tags")
 
-                category_df=reterive_categories_as_datafrfame()
-                st.dataframe(category_df,use_container_width=True,hide_index=True)
-                category_submit_valid=True
-                with st.form("Add new Category to database",clear_on_submit=True):
-                    category_name=st.text_input("Please enter the new category you want to add").capitalize()
-                    submit_new_category=st.form_submit_button("Add Category", type="primary")
+                if item_filter_toggle:
+                    st.write("TEST")
+                    #categories=[cat[0] for cat in reterive_categories_as_datafrfame().values]
+                    #category_to_add_new_fiter=st.selectbox("Please select a category that you want to add new filter ",[""]+categories)
+                    #if category_to_add_new_fiter:
+                    #    item_tags=list(reterive_categories_as_datafrfame(retrive_column="tags",category_name=category_to_add_new_fiter).values)
+                    #    st.write(item_tags)
 
-                    if submit_new_category:
-                        if len(category_name)==0:
-                            category_submit_valid=False
-                            st.error("⚠️ Please enter a category name")
-                            time.sleep(1.5)
-                            st.rerun()
 
-                        if category_name in db.get_category_from_database():
-                            category_submit_valid=False
-                            st.error(f"⚠️ {category_name} Category already exist in the database")
-                            time.sleep(1.5)
-                            st.rerun()
+                else:
+                    category_df = reterive_categories_as_datafrfame()
+                    st.dataframe(category_df,use_container_width=True,hide_index=True)
+                    category_submit_valid=True
+                    with st.form("Add new Category to database",clear_on_submit=True):
+                        category_name=st.text_input("Please enter the new category you want to add").capitalize()
+                        submit_new_category=st.form_submit_button("Add Category", type="primary")
 
-                        if category_submit_valid:
-                            print(db.insert_new_category(category_name))
-                            st.success(f"✅ {category_name} has been successfully added to the database")
-                            time.sleep(1.5)
-                            st.rerun()
+                        if submit_new_category:
+                            if len(category_name)==0:
+                                category_submit_valid=False
+                                st.error("⚠️ Please enter a category name")
+                                time.sleep(1.5)
+                                st.rerun()
+
+                            if category_name in db.get_category_from_database():
+                                category_submit_valid=False
+                                st.error(f"⚠️ {category_name} Category already exist in the database")
+                                time.sleep(1.5)
+                                st.rerun()
+
+                            if category_submit_valid:
+                                print(db.insert_new_category(category_name))
+                                st.success(f"✅ {category_name} has been successfully added to the database")
+                                time.sleep(1.5)
+                                st.rerun()
 
 
 
