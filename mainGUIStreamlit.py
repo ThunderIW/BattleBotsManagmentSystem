@@ -14,18 +14,16 @@ import streamlit_shadcn_ui as ui
 
 
 
-def reterive_categories_as_datafrfame(retrive_column="cat", category_name=""):
+def reterive_categories_as_datafrfame(retrive_column="cat"):
     conn=sqlite3.connect('BattleBots.db')
 
-    if retrive_column=='cat':
-        df=pd.read_sql_query("SELECT category_name as Category FROM Category",conn)
-        return df
 
-    if retrive_column=='tags':
-        df=pd.read_sql_query(f"SELECT Item_filter_tags as tags FROM Category WHERE category_name='{category_name}' ",conn)
-        return df
+    df=pd.read_sql_query("SELECT category_name as Category FROM Category",conn)
+    return df
 
-    return "Nothing"
+
+
+
 
 
 
@@ -366,12 +364,30 @@ try:
                 item_filter_toggle=st.toggle("Add item filter tags")
 
                 if item_filter_toggle:
-                    st.write("TEST")
-                    #categories=[cat[0] for cat in reterive_categories_as_datafrfame().values]
-                    #category_to_add_new_fiter=st.selectbox("Please select a category that you want to add new filter ",[""]+categories)
-                    #if category_to_add_new_fiter:
-                    #    item_tags=list(reterive_categories_as_datafrfame(retrive_column="tags",category_name=category_to_add_new_fiter).values)
-                    #    st.write(item_tags)
+                    categories=[cat[0] for cat in reterive_categories_as_datafrfame().values]
+                    category_to_add_new_fiter=st.selectbox("Please select a category that you want to add new filter ",[""]+categories)
+                    if category_to_add_new_fiter:
+                        item_tags=db.get_category_tags(category_to_add_new_fiter)
+                        print(len(item_tags))
+                        if len(item_tags)>0:
+                            with st.expander(f"Filter tags for {category_to_add_new_fiter} category",expanded=True):
+                                for tag in item_tags:
+                                    st.write(tag)
+
+                        else:
+                            st.error(f"No filter tags found for {category_to_add_new_fiter}")
+
+
+
+
+
+
+                        #print(category_to_add_new_fiter)
+                        #get_category_tags(category_name)
+
+
+
+                        #st.write(item_tags[0])
 
 
                 else:

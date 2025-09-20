@@ -1,6 +1,6 @@
 import sqlite3
 import polars as pl
-
+import json
 
 def create_Database_connect():
     conn=sqlite3.connect('BattleBots.db')
@@ -22,6 +22,27 @@ def get_category_from_database():
     except sqlite3.Error as e:
         return f"Error retrieving categories from database: {e}"
 
+
+
+def get_category_tags(category_name):
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute("""
+        SELECT Item_filter_tags FROM Category
+        WHERE category_name=?
+        """,(category_name,))
+        items = cursor.fetchall()[0][0]
+        print(items)
+        if items is not None:
+            lst=json.loads(items)
+            return lst
+        return ""
+
+
+
+    except sqlite3.Error as e:
+        return f"Error retrieving tags from database: {e}"
 
 
 def insert_new_category(category_name):
