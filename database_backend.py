@@ -41,6 +41,20 @@ def get_category_tags(category_name):
     except sqlite3.Error as e:
         return f"Error retrieving tags from database: {e}"
 
+def remove_category_from_database(category_name):
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute("""
+        DELETE FROM Category
+        WHERE category_name=?
+        
+        """,(category_name,))
+        conn.commit()
+        conn.close()
+    except sqlite3.Error as e:
+        return f"Error removing tags from database: {e}"
+
 
 def insert_new_filter_tag(new_List:str,category):
     try:

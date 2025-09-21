@@ -451,6 +451,13 @@ try:
                     category_df = reterive_categories_as_datafrfame()
                     st.dataframe(category_df,width='stretch',hide_index=True)
                     category_submit_valid=True
+
+                    toggle_button_to_remove_category=st.toggle("Remove Category")
+
+
+                
+
+
                     with st.form("Add new Category to database",clear_on_submit=True):
                         category_name=st.text_input("Please enter the new category you want to add").capitalize()
                         submit_new_category=st.form_submit_button("Add Category", type="primary")
