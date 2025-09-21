@@ -33,16 +33,30 @@ def get_category_tags(category_name):
         WHERE category_name=?
         """,(category_name,))
         items = cursor.fetchall()[0][0]
-        print(items)
+        #print(list(items))
         if items is not None:
             lst=json.loads(items)
             return lst
         return ""
-
-
-
     except sqlite3.Error as e:
         return f"Error retrieving tags from database: {e}"
+
+
+def insert_new_filter_tag(new_List:str,category):
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+
+        cursor.execute("""
+            UPDATE Category 
+            SET Item_filter_tags=?
+            WHERE category_name=?
+        """,(json.dumps(new_List),category))
+        conn.commit()
+        conn.close()
+
+    except sqlite3.Error as e:
+            return f"Error updating filter tags in database: {e}"
 
 
 def insert_new_category(category_name):

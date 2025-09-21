@@ -1,3 +1,4 @@
+import json
 import sqlite3
 import streamlit as st
 import streamlit_authenticator  as stauth
@@ -368,11 +369,67 @@ try:
                     category_to_add_new_fiter=st.selectbox("Please select a category that you want to add new filter ",[""]+categories)
                     if category_to_add_new_fiter:
                         item_tags=db.get_category_tags(category_to_add_new_fiter)
-                        print(len(item_tags))
+
+
                         if len(item_tags)>0:
                             with st.expander(f"Filter tags for {category_to_add_new_fiter} category",expanded=True):
-                                for tag in item_tags:
-                                    st.write(tag)
+                                #st.write("TEST")
+                                for tag in range(0,len(item_tags)):
+                                    st.write(f"{tag+1} - **{item_tags[tag]}**")
+                            add_or_remove_tags=st.toggle("Remove Filter tags")
+
+                            if add_or_remove_tags:
+                                with st.form(f" Remove filter tag", clear_on_submit=True):
+                                    tag_to_remove=st.selectbox("Please select which tag you want to remove",options=[""]+item_tags)
+                                    remove_tag_button=st.form_submit_button(f"Remove Tag",type="primary")
+
+                                    if remove_tag_button:
+                                        valid_flag_for_removal=True
+                                        if len(tag_to_remove)==0:
+                                            valid_flag_for_removal=False
+                                            st.error("Please select at least one tag to remove")
+
+
+                                        if valid_flag_for_removal:
+                                            st.success(f"{tag_to_remove} has been successfully removed from {category_to_add_new_fiter}")
+                                            item_tags.remove(tag_to_remove)
+                                            db.insert_new_filter_tag(item_tags,category_to_add_new_fiter)
+                                        time.sleep(0.5)
+                                        st.rerun()
+
+
+                            else:
+
+                                with st.form(f"Add new filter tag",clear_on_submit=True):
+                                    new_tag=st.text_input(f"Add new filter tag for {category_to_add_new_fiter}")
+                                    submit_new_filter_tag=st.form_submit_button("Add new filter tag",type='primary')
+
+                                    if  submit_new_filter_tag:
+                                        valid_Flag=True
+                                        if len(new_tag)<0:
+                                            valid_Flag=False
+
+
+
+                                        if new_tag in item_tags:
+                                            valid_Flag=False
+                                            st.error(f"{new_tag} tag for {category_to_add_new_fiter} already exists in database")
+
+                                        if valid_Flag:
+                                            item_tags.append(new_tag)
+                                            st.success(
+                                            f'{new_tag} tag for {category_to_add_new_fiter} has been added to database')
+                                            print(db.insert_new_filter_tag(item_tags, category_to_add_new_fiter))
+
+
+                                        else:
+                                            st.error("Please enter a valid filter tag")
+                                        time.sleep(0.5)
+                                        st.rerun()
+
+
+
+
 
                         else:
                             st.error(f"No filter tags found for {category_to_add_new_fiter}")
@@ -392,12 +449,11 @@ try:
 
                 else:
                     category_df = reterive_categories_as_datafrfame()
-                    st.dataframe(category_df,use_container_width=True,hide_index=True)
+                    st.dataframe(category_df,width='stretch',hide_index=True)
                     category_submit_valid=True
                     with st.form("Add new Category to database",clear_on_submit=True):
                         category_name=st.text_input("Please enter the new category you want to add").capitalize()
                         submit_new_category=st.form_submit_button("Add Category", type="primary")
-
                         if submit_new_category:
                             if len(category_name)==0:
                                 category_submit_valid=False
