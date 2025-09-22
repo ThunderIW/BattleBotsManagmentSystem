@@ -32,7 +32,7 @@ def display_tag_add_deletion(tags_list:list=None,type='add'):
                     st.success(f"{tag_to_remove} has been successfully removed from {category_to_add_new_fiter}")
                     tags_list.remove(tag_to_remove)
                     db.insert_new_filter_tag(json.dumps(tags_list), category_to_add_new_fiter)
-                time.sleep(0.5)
+                time.sleep(1.5)
                 st.rerun()
 
 
@@ -62,7 +62,7 @@ def display_tag_add_deletion(tags_list:list=None,type='add'):
                         f'{new_tag} tag for {category_to_add_new_fiter} has been added to database')
                     #print(tags_list)
                     print(db.insert_new_filter_tag(json.dumps(tags_list), category_to_add_new_fiter))
-                time.sleep(0.5)
+                time.sleep(1.5)
                 st.rerun()
 
 
@@ -464,7 +464,27 @@ try:
 
 
                     if toggle_button_to_remove_category:
-                        st.write("Please select a category that you want to remove")
+                        categories=db.get_category_from_database()
+                        st.subheader("Please select a category that you want to remove")
+                        with st.form("Remove Category",clear_on_submit=True):
+                            category_to_remove=st.selectbox("Please select a category that you want to remove",[""]+categories)
+                            category_to_remove_button=st.form_submit_button(label="Remove Category",type="primary")
+                            if category_to_remove_button:
+                                valid_remove_category_flag=True
+                                if len(category_to_remove)==0:
+                                    valid_remove_category_flag=False
+                                    st.error("Please select a category that you want to remove")
+
+                                if valid_remove_category_flag:
+                                    st.success(f"✅ {category_to_remove} has been successfully removed")
+                                    db.remove_category_from_database(category_to_remove)
+                                time.sleep(1.5)
+                                st.rerun()
+
+
+
+
+
 
                     else:
 
