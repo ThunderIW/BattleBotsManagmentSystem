@@ -374,7 +374,7 @@ try:
 
 
                 else:
-                    st.subheader(" Download Table Mode")
+                    st.subheader("Download Table Mode")
                     table_to_view = st.selectbox(label="Chose which table to view",options=[""]+tables)
                     if table_to_view:
                         table_as_dataframe = db.export_database_to_dataframe(table_to_view)
@@ -400,9 +400,6 @@ try:
                         conn=db.create_Database_connect()
                         upload_file_to_dataframe.to_sql(table_name,conn,if_exists='replace',index=False)
                         conn.commit()
-
-
-
 
 
 
@@ -466,30 +463,32 @@ try:
                     toggle_button_to_remove_category=st.toggle("Remove Category")
 
 
+                    if toggle_button_to_remove_category:
+                        st.write("Please select a category that you want to remove")
 
+                    else:
 
+                        with st.form("Add new Category to database",clear_on_submit=True):
+                            category_name=st.text_input("Please enter the new category you want to add").capitalize()
+                            submit_new_category=st.form_submit_button("Add Category", type="primary")
+                            if submit_new_category:
+                                if len(category_name)==0:
+                                    category_submit_valid=False
+                                    st.error("⚠️ Please enter a category name")
+                                    time.sleep(1.5)
+                                    st.rerun()
 
-                    with st.form("Add new Category to database",clear_on_submit=True):
-                        category_name=st.text_input("Please enter the new category you want to add").capitalize()
-                        submit_new_category=st.form_submit_button("Add Category", type="primary")
-                        if submit_new_category:
-                            if len(category_name)==0:
-                                category_submit_valid=False
-                                st.error("⚠️ Please enter a category name")
-                                time.sleep(1.5)
-                                st.rerun()
+                                if category_name in db.get_category_from_database():
+                                    category_submit_valid=False
+                                    st.error(f"⚠️ {category_name} Category already exist in the database")
+                                    time.sleep(1.5)
+                                    st.rerun()
 
-                            if category_name in db.get_category_from_database():
-                                category_submit_valid=False
-                                st.error(f"⚠️ {category_name} Category already exist in the database")
-                                time.sleep(1.5)
-                                st.rerun()
-
-                            if category_submit_valid:
-                                print(db.insert_new_category(category_name))
-                                st.success(f"✅ {category_name} has been successfully added to the database")
-                                time.sleep(1.5)
-                                st.rerun()
+                                if category_submit_valid:
+                                    print(db.insert_new_category(category_name))
+                                    st.success(f"✅ {category_name} has been successfully added to the database")
+                                    time.sleep(1.5)
+                                    st.rerun()
 
 
 
