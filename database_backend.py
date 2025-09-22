@@ -58,6 +58,7 @@ def remove_category_from_database(category_name):
 
 def insert_new_filter_tag(new_List:str,category):
     try:
+        print(type(new_List))
         conn=create_Database_connect()
         cursor=conn.cursor()
 
@@ -65,7 +66,7 @@ def insert_new_filter_tag(new_List:str,category):
             UPDATE Category 
             SET Item_filter_tags=?
             WHERE category_name=?
-        """,(json.dumps(new_List),category))
+        """,(new_List,category))
         conn.commit()
         conn.close()
 

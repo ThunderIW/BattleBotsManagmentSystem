@@ -15,16 +15,71 @@ import streamlit_shadcn_ui as ui
 
 
 
+def display_tag_add_deletion(tags_list:list=None,type='add'):
+
+    if type=='remove':
+        with st.form(f" Remove filter tag", clear_on_submit=True):
+            tag_to_remove = st.selectbox("Please select which tag you want to remove", options=[""] + item_tags)
+            remove_tag_button = st.form_submit_button(f"Remove Tag", type="primary")
+
+            if remove_tag_button:
+                valid_flag_for_removal = True
+                if len(tag_to_remove) == 0:
+                    valid_flag_for_removal = False
+                    st.error("Please select at least one tag to remove")
+
+                if valid_flag_for_removal:
+                    st.success(f"{tag_to_remove} has been successfully removed from {category_to_add_new_fiter}")
+                    tags_list.remove(tag_to_remove)
+                    db.insert_new_filter_tag(json.dumps(tags_list), category_to_add_new_fiter)
+                time.sleep(0.5)
+                st.rerun()
+
+
+
+    if type=='add':
+
+        with st.form(f"Add new filter tag", clear_on_submit=True):
+            new_tag = st.text_input(f"Add new filter tag for {category_to_add_new_fiter}")
+            submit_new_filter_tag = st.form_submit_button("Add new filter tag", type='primary')
+
+
+            if tags_list is None:
+                tags_list = []
+
+            if submit_new_filter_tag:
+                valid_Flag = True
+                if len(new_tag) == 0:
+                    valid_Flag = False
+
+                if new_tag in tags_list:
+                    valid_Flag = False
+                    st.error(f"{new_tag} tag for {category_to_add_new_fiter} already exists in database")
+
+                if valid_Flag:
+                    tags_list.append(new_tag)
+                    st.success(
+                        f'{new_tag} tag for {category_to_add_new_fiter} has been added to database')
+                    #print(tags_list)
+                    print(db.insert_new_filter_tag(json.dumps(tags_list), category_to_add_new_fiter))
+                time.sleep(0.5)
+                st.rerun()
+
+
+
+
+
+
+
+
+
+
 def reterive_categories_as_datafrfame(retrive_column="cat"):
     conn=sqlite3.connect('BattleBots.db')
 
 
     df=pd.read_sql_query("SELECT category_name as Category FROM Category",conn)
     return df
-
-
-
-
 
 
 
@@ -368,6 +423,7 @@ try:
                     categories=[cat[0] for cat in reterive_categories_as_datafrfame().values]
                     category_to_add_new_fiter=st.selectbox("Please select a category that you want to add new filter ",[""]+categories)
                     if category_to_add_new_fiter:
+
                         item_tags=db.get_category_tags(category_to_add_new_fiter)
 
 
@@ -376,65 +432,20 @@ try:
                                 #st.write("TEST")
                                 for tag in range(0,len(item_tags)):
                                     st.write(f"{tag+1} - **{item_tags[tag]}**")
+
+                            display_tag_add_deletion(item_tags,type='add')
+
                             add_or_remove_tags=st.toggle("Remove Filter tags")
 
                             if add_or_remove_tags:
-                                with st.form(f" Remove filter tag", clear_on_submit=True):
-                                    tag_to_remove=st.selectbox("Please select which tag you want to remove",options=[""]+item_tags)
-                                    remove_tag_button=st.form_submit_button(f"Remove Tag",type="primary")
-
-                                    if remove_tag_button:
-                                        valid_flag_for_removal=True
-                                        if len(tag_to_remove)==0:
-                                            valid_flag_for_removal=False
-                                            st.error("Please select at least one tag to remove")
-
-
-                                        if valid_flag_for_removal:
-                                            st.success(f"{tag_to_remove} has been successfully removed from {category_to_add_new_fiter}")
-                                            item_tags.remove(tag_to_remove)
-                                            db.insert_new_filter_tag(item_tags,category_to_add_new_fiter)
-                                        time.sleep(0.5)
-                                        st.rerun()
-
-
-                            else:
-
-                                with st.form(f"Add new filter tag",clear_on_submit=True):
-                                    new_tag=st.text_input(f"Add new filter tag for {category_to_add_new_fiter}")
-                                    submit_new_filter_tag=st.form_submit_button("Add new filter tag",type='primary')
-
-                                    if  submit_new_filter_tag:
-                                        valid_Flag=True
-                                        if len(new_tag)<0:
-                                            valid_Flag=False
-
-
-
-                                        if new_tag in item_tags:
-                                            valid_Flag=False
-                                            st.error(f"{new_tag} tag for {category_to_add_new_fiter} already exists in database")
-
-                                        if valid_Flag:
-                                            item_tags.append(new_tag)
-                                            st.success(
-                                            f'{new_tag} tag for {category_to_add_new_fiter} has been added to database')
-                                            print(db.insert_new_filter_tag(item_tags, category_to_add_new_fiter))
-
-
-                                        else:
-                                            st.error("Please enter a valid filter tag")
-                                        time.sleep(0.5)
-                                        st.rerun()
-
+                                display_tag_add_deletion(item_tags,type='remove')
 
 
 
 
                         else:
-                            st.error(f"No filter tags found for {category_to_add_new_fiter}")
-
-
+                            st.warning(f"No filter tags found for {category_to_add_new_fiter} please add one")
+                            display_tag_add_deletion(type='add')
 
 
 
@@ -455,7 +466,7 @@ try:
                     toggle_button_to_remove_category=st.toggle("Remove Category")
 
 
-                
+
 
 
                     with st.form("Add new Category to database",clear_on_submit=True):
