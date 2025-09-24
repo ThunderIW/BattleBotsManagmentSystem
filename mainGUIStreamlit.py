@@ -10,7 +10,7 @@ import time
 import polars as pl
 import pandas as pd
 from pathlib import Path
-from encrypt_file import decrypt
+from encrypt_file import encryptAndDecrypt
 import streamlit_shadcn_ui as ui
 
 
@@ -98,7 +98,9 @@ def display_items(category_items,chosen_category,selected_tags):
 
 
 
-login_file=decrypt()
+
+d=encryptAndDecrypt()
+login_file=d.decrypt()
 #with open(login_file, "r") as file:
 config = yaml.load(login_file, Loader=SafeLoader)
 stauth.Hasher.hash_passwords(config['credentials'])
