@@ -68,12 +68,6 @@ def display_tag_add_deletion(tags_list:list=None,type='add'):
 
 
 
-
-
-
-
-
-
 def reterive_categories_as_datafrfame(retrive_column="cat"):
     conn=sqlite3.connect('BattleBots.db')
 
@@ -154,31 +148,31 @@ try:
         tab1,tab2,tab3,tab4=st.tabs(["**View Items** 🔍 ", "**Add new Items or Delete Item** (➕/➖)", "**Update Items**","**Admin Page** 🖥️🔑"])
         with tab1:
             view_all_items_by_category=st.toggle("View all items by category")
+            current_category=db.get_category_from_database()
 
             if view_all_items_by_category:
-                chosen_category=st.selectbox("Please select which category you want to view",options=["","Screws","Battery","Wheels","ESC"])
+                chosen_category=st.selectbox("Please select which category you want to view",options=[""]+current_category)
 
 
                 if chosen_category:
-                    if chosen_category=="Screws":
-                        filter_tags = [
-                            "M1.6", "M2", "M2.5", "M3", "M4", "M5",
-                            "M6", "M8", "M10", "M12", "M14", "M16", "M20", "M24","Home Depot"
-                        ]
-                    if chosen_category=="Battery":
-                        filter_tags=["Lithium","NiMH","Li-ion","6S"]
+                    filter_tags=db.get_category_tags(chosen_category)
+
+
 
                     select_tags=st.multiselect("filter options",options=filter_tags)
 
 
                     category_items = db.get_items_by_category(chosen_category,select_tags)
 
+                    if len(filter_tags)>0:
 
-                    if len(category_items)==0 and len(select_tags)>0:
-                        st.warning(f"⚠️ No items found in the {chosen_category} category with the selected tags")
+                        if len(category_items)==0 and len(select_tags)>0:
+                            st.warning(f"⚠️ No items found in the {chosen_category} category with the selected tags")
 
-                    elif len(category_items)==0 and len(select_tags)==0:
-                        st.warning(f"⚠️ No items found in the {chosen_category} category")
+                        elif len(category_items)==0 and len(select_tags)==0:
+                            st.warning(f"⚠️ No items found in the {chosen_category} category")
+                    else:
+                        st.warning(f"⚠️ There are no **filter tags** found for {chosen_category} category please add them in the admin page ")
 
 
                     display_items(category_items,chosen_category,select_tags)
