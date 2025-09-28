@@ -524,7 +524,7 @@ try:
 
 
 
-            '''
+
             with st.expander("Clear Table info"):
                 choice=st.selectbox("Please select which table you want to clear",options=[""]+db.get_table_in_database())
                 if len(choice)>0:
@@ -534,7 +534,7 @@ try:
                         if delete_button:
                             db.delete_everything_from_database(choice)
 
-            '''
+
 
 
         authenticator.logout()
