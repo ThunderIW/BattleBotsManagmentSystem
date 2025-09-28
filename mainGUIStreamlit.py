@@ -453,8 +453,12 @@ try:
 
 
                 else:
-                    category_df = reterive_categories_as_datafrfame()
-                    st.dataframe(category_df,width='stretch',hide_index=True)
+
+
+
+                    print(db.get_category_from_database())
+                    #category_df = reterive_categories_as_datafrfame()
+                    #st.dataframe(category_df,width='stretch',hide_index=True)
                     category_submit_valid=True
 
                     toggle_button_to_remove_category=st.toggle("Remove Category")
@@ -520,7 +524,7 @@ try:
 
 
 
-
+            '''
             with st.expander("Clear Table info"):
                 choice=st.selectbox("Please select which table you want to clear",options=[""]+db.get_table_in_database())
                 if len(choice)>0:
@@ -530,7 +534,7 @@ try:
                         if delete_button:
                             db.delete_everything_from_database(choice)
 
-
+            '''
 
 
         authenticator.logout()
