@@ -453,13 +453,13 @@ try:
 
 
                 else:
-
-
-
-                    print(db.get_category_from_database())
+                    cat=db.get_category_from_database()
                     #category_df = reterive_categories_as_datafrfame()
                     #st.dataframe(category_df,width='stretch',hide_index=True)
                     category_submit_valid=True
+                    with st.expander("Current Categories",expanded=True):
+                        for category in range(0,len(cat)):
+                            st.write(f"{category+1} - {cat[category]}")
 
                     toggle_button_to_remove_category=st.toggle("Remove Category")
 
