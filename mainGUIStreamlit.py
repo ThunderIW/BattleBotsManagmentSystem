@@ -109,6 +109,10 @@ try:
 
                     category_items = db.get_items_by_category(chosen_category,select_tags)
 
+                    if len(filter_tags)>0:
+                        print("TEST")
+
+
 
                     if len(category_items)==0 and len(select_tags)>0:
                         st.warning(f"⚠️ No items found in the {chosen_category} category with the selected tags")
