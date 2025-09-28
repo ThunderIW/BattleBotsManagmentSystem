@@ -1,4 +1,3 @@
-import json
 import sqlite3
 import streamlit as st
 import streamlit_authenticator  as stauth
@@ -10,68 +9,13 @@ import time
 import polars as pl
 import pandas as pd
 from pathlib import Path
-from encrypt_file import encryptAndDecrypt
+from encrypt_file import decrypt
 import streamlit_shadcn_ui as ui
 
 
 
-def display_tag_add_deletion(tags_list:list=None,type='add'):
-
-    if type=='remove':
-        with st.form(f" Remove filter tag", clear_on_submit=True):
-            tag_to_remove = st.selectbox("Please select which tag you want to remove", options=[""] + item_tags)
-            remove_tag_button = st.form_submit_button(f"Remove Tag", type="primary")
-
-            if remove_tag_button:
-                valid_flag_for_removal = True
-                if len(tag_to_remove) == 0:
-                    valid_flag_for_removal = False
-                    st.error("Please select at least one tag to remove")
-
-                if valid_flag_for_removal:
-                    st.success(f"{tag_to_remove} has been successfully removed from {category_to_add_new_fiter}")
-                    tags_list.remove(tag_to_remove)
-                    db.insert_new_filter_tag(json.dumps(tags_list), category_to_add_new_fiter)
-                time.sleep(1.5)
-                st.rerun()
-
-
-
-    if type=='add':
-
-        with st.form(f"Add new filter tag", clear_on_submit=True):
-            new_tag = st.text_input(f"Add new filter tag for {category_to_add_new_fiter}")
-            submit_new_filter_tag = st.form_submit_button("Add new filter tag", type='primary')
-
-
-            if tags_list is None:
-                tags_list = []
-
-            if submit_new_filter_tag:
-                valid_Flag = True
-                if len(new_tag) == 0:
-                    valid_Flag = False
-
-                if new_tag in tags_list:
-                    valid_Flag = False
-                    st.error(f"{new_tag} tag for {category_to_add_new_fiter} already exists in database")
-
-                if valid_Flag:
-                    tags_list.append(new_tag)
-                    st.success(
-                        f'{new_tag} tag for {category_to_add_new_fiter} has been added to database')
-                    #print(tags_list)
-                    print(db.insert_new_filter_tag(json.dumps(tags_list), category_to_add_new_fiter))
-                time.sleep(1.5)
-                st.rerun()
-
-
-
-
-def reterive_categories_as_datafrfame(retrive_column="cat"):
+def reterive_categories_as_datafrfame():
     conn=sqlite3.connect('BattleBots.db')
-
-
     df=pd.read_sql_query("SELECT category_name as Category FROM Category",conn)
     return df
 
@@ -92,9 +36,7 @@ def display_items(category_items,chosen_category,selected_tags):
 
 
 
-
-d=encryptAndDecrypt()
-login_file=d.decrypt()
+login_file=decrypt()
 #with open(login_file, "r") as file:
 config = yaml.load(login_file, Loader=SafeLoader)
 stauth.Hasher.hash_passwords(config['credentials'])
@@ -148,16 +90,19 @@ try:
         tab1,tab2,tab3,tab4=st.tabs(["**View Items** 🔍 ", "**Add new Items or Delete Item** (➕/➖)", "**Update Items**","**Admin Page** 🖥️🔑"])
         with tab1:
             view_all_items_by_category=st.toggle("View all items by category")
-            current_category=db.get_category_from_database()
 
             if view_all_items_by_category:
-                chosen_category=st.selectbox("Please select which category you want to view",options=[""]+current_category)
+                chosen_category=st.selectbox("Please select which category you want to view",options=["","Screws","Battery","Wheels","ESC"])
 
 
                 if chosen_category:
-                    filter_tags=db.get_category_tags(chosen_category)
-
-
+                    if chosen_category=="Screws":
+                        filter_tags = [
+                            "M1.6", "M2", "M2.5", "M3", "M4", "M5",
+                            "M6", "M8", "M10", "M12", "M14", "M16", "M20", "M24","Home Depot"
+                        ]
+                    if chosen_category=="Battery":
+                        filter_tags=["Lithium","NiMH","Li-ion","6S"]
 
                     select_tags=st.multiselect("filter options",options=filter_tags)
 
@@ -167,13 +112,13 @@ try:
                     if len(filter_tags)>0:
                         print("TEST")
 
-                        if len(category_items)==0 and len(select_tags)>0:
-                            st.warning(f"⚠️ No items found in the {chosen_category} category with the selected tags")
 
-                        elif len(category_items)==0 and len(select_tags)==0:
-                            st.warning(f"⚠️ No items found in the {chosen_category} category")
-                    else:
-                        st.warning(f"⚠️ There are no **filter tags** found for {chosen_category} category please add them in the admin page ")
+
+                    if len(category_items)==0 and len(select_tags)>0:
+                        st.warning(f"⚠️ No items found in the {chosen_category} category with the selected tags")
+
+                    elif len(category_items)==0 and len(select_tags)==0:
+                        st.warning(f"⚠️ No items found in the {chosen_category} category")
 
 
                     display_items(category_items,chosen_category,select_tags)
@@ -371,7 +316,7 @@ try:
 
 
                 else:
-                    st.subheader("Download Table Mode")
+                    st.subheader(" Download Table Mode")
                     table_to_view = st.selectbox(label="Chose which table to view",options=[""]+tables)
                     if table_to_view:
                         table_as_dataframe = db.export_database_to_dataframe(table_to_view)
@@ -401,6 +346,9 @@ try:
 
 
 
+
+
+
                     except Exception as e:
                         print(f"Upload issue {e}")
 
@@ -410,102 +358,33 @@ try:
                         st.success(f"{csv_file.name} has been successfully uploaded")
                         time.sleep(0.5)
                         st.rerun()
-            with st.expander("Add new Category or item filter tags"):
-                item_filter_toggle=st.toggle("Add item filter tags")
+            with st.expander("Add new Category"):
 
-                if item_filter_toggle:
-                    categories=[cat[0] for cat in reterive_categories_as_datafrfame().values]
-                    category_to_add_new_fiter=st.selectbox("Please select a category that you want to add new filter ",[""]+categories)
-                    if category_to_add_new_fiter:
+                category_df=reterive_categories_as_datafrfame()
+                st.dataframe(category_df,use_container_width=True,hide_index=True)
+                category_submit_valid=True
+                with st.form("Add new Category to database",clear_on_submit=True):
+                    category_name=st.text_input("Please enter the new category you want to add").capitalize()
+                    submit_new_category=st.form_submit_button("Add Category", type="primary")
 
-                        item_tags=db.get_category_tags(category_to_add_new_fiter)
+                    if submit_new_category:
+                        if len(category_name)==0:
+                            category_submit_valid=False
+                            st.error("⚠️ Please enter a category name")
+                            time.sleep(1.5)
+                            st.rerun()
 
+                        if category_name in db.get_category_from_database():
+                            category_submit_valid=False
+                            st.error(f"⚠️ {category_name} Category already exist in the database")
+                            time.sleep(1.5)
+                            st.rerun()
 
-                        if len(item_tags)>0:
-                            with st.expander(f"Filter tags for {category_to_add_new_fiter} category",expanded=True):
-                                #st.write("TEST")
-                                for tag in range(0,len(item_tags)):
-                                    st.write(f"{tag+1} - **{item_tags[tag]}**")
-
-                            display_tag_add_deletion(item_tags,type='add')
-
-                            add_or_remove_tags=st.toggle("Remove Filter tags")
-
-                            if add_or_remove_tags:
-                                display_tag_add_deletion(item_tags,type='remove')
-
-
-
-
-                        else:
-                            st.warning(f"No filter tags found for {category_to_add_new_fiter} please add one")
-                            display_tag_add_deletion(type='add')
-
-
-
-
-                        #print(category_to_add_new_fiter)
-                        #get_category_tags(category_name)
-
-
-
-                        #st.write(item_tags[0])
-
-
-                else:
-                    category_df = reterive_categories_as_datafrfame()
-                    st.dataframe(category_df,width='stretch',hide_index=True)
-                    category_submit_valid=True
-
-                    toggle_button_to_remove_category=st.toggle("Remove Category")
-
-
-                    if toggle_button_to_remove_category:
-                        categories=db.get_category_from_database()
-                        st.subheader("Please select a category that you want to remove")
-                        with st.form("Remove Category",clear_on_submit=True):
-                            category_to_remove=st.selectbox("Please select a category that you want to remove",[""]+categories)
-                            category_to_remove_button=st.form_submit_button(label="Remove Category",type="primary")
-                            if category_to_remove_button:
-                                valid_remove_category_flag=True
-                                if len(category_to_remove)==0:
-                                    valid_remove_category_flag=False
-                                    st.error("Please select a category that you want to remove")
-
-                                if valid_remove_category_flag:
-                                    st.success(f"✅ {category_to_remove} has been successfully removed")
-                                    db.remove_category_from_database(category_to_remove)
-                                time.sleep(1.5)
-                                st.rerun()
-
-
-
-
-
-
-                    else:
-
-                        with st.form("Add new Category to database",clear_on_submit=True):
-                            category_name=st.text_input("Please enter the new category you want to add").capitalize()
-                            submit_new_category=st.form_submit_button("Add Category", type="primary")
-                            if submit_new_category:
-                                if len(category_name)==0:
-                                    category_submit_valid=False
-                                    st.error("⚠️ Please enter a category name")
-                                    time.sleep(1.5)
-                                    st.rerun()
-
-                                if category_name in db.get_category_from_database():
-                                    category_submit_valid=False
-                                    st.error(f"⚠️ {category_name} Category already exist in the database")
-                                    time.sleep(1.5)
-                                    st.rerun()
-
-                                if category_submit_valid:
-                                    print(db.insert_new_category(category_name))
-                                    st.success(f"✅ {category_name} has been successfully added to the database")
-                                    time.sleep(1.5)
-                                    st.rerun()
+                        if category_submit_valid:
+                            print(db.insert_new_category(category_name))
+                            st.success(f"✅ {category_name} has been successfully added to the database")
+                            time.sleep(1.5)
+                            st.rerun()
 
 
 
