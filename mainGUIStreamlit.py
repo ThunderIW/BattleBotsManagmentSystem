@@ -20,7 +20,6 @@ def display_tag_add_deletion(tags_list:list=None,type='add'):
     if type=='remove':
         with st.form(f" Remove filter tag", clear_on_submit=True):
             tag_to_remove = st.multiselect("Please select which tag you want to remove", options=[""] + item_tags)
-            st.write("You chose the following tags to delete:", tag_to_remove)
             remove_tag_button = st.form_submit_button(f"Remove Tag", type="primary")
 
             if remove_tag_button:
@@ -30,15 +29,16 @@ def display_tag_add_deletion(tags_list:list=None,type='add'):
                     st.error("Please select at least one tag to remove")
 
                 if valid_flag_for_removal:
+                    for tag in tags_list[:]:
+                        print(tag)
+                        tags_list.remove(tag)
+                        
                     st.success(f"{tag_to_remove} has been successfully removed from {category_to_add_new_fiter}")
                     
-                    for tag in tags_list:
-                        tags_list.remove(tag)
                     
                     db.insert_new_filter_tag(json.dumps(tags_list), category_to_add_new_fiter)
                 time.sleep(1.5)
                 st.rerun()
-
 
 
     if type=='add':
