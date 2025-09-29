@@ -19,7 +19,8 @@ def display_tag_add_deletion(tags_list:list=None,type='add'):
 
     if type=='remove':
         with st.form(f" Remove filter tag", clear_on_submit=True):
-            tag_to_remove = st.selectbox("Please select which tag you want to remove", options=[""] + item_tags)
+            tag_to_remove = st.multiselect("Please select which tag you want to remove", options=[""] + item_tags)
+            st.write("You chose the following tags to delete:", tag_to_remove)
             remove_tag_button = st.form_submit_button(f"Remove Tag", type="primary")
 
             if remove_tag_button:
@@ -74,7 +75,6 @@ def reterive_categories_as_datafrfame(retrive_column="cat"):
 
     df=pd.read_sql_query("SELECT category_name as Category FROM Category",conn)
     return df
-
 
 
 
@@ -209,9 +209,16 @@ try:
                 Delete_type=st.selectbox(label="Please select what you want to delete",options=["","Room","Item"])
                 if Delete_type=="Item":
                     items = db.get_items()
-                    item_to_delete_from_database=st.selectbox("Select the item",options=[""]+items)
-                    confirm_button=st.button(f"Delete {item_to_delete_from_database} ", type='primary')
+                    item_to_delete_from_database=st.multiselect("Select the item",options=items)
+
+                    if item_to_delete_from_database:
+                        confirm_button = st.button(f"Delete {item_to_delete_from_database} ", type='primary')
+                    else:
+                        st.write("Please select an item to delete")
+
+
                     if confirm_button:
+                        is_valid = True
                         if len(item_to_delete_from_database)==0:
                             is_valid=False
                             st.error(f"⚠️ Please select a Item to remove")
@@ -419,6 +426,7 @@ try:
                     if category_to_add_new_fiter:
 
                         item_tags=db.get_category_tags(category_to_add_new_fiter)
+                        
 
 
                         if len(item_tags)>0:
@@ -433,6 +441,7 @@ try:
 
                             if add_or_remove_tags:
                                 display_tag_add_deletion(item_tags,type='remove')
+
 
 
 
