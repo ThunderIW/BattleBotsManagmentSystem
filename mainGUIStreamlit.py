@@ -31,7 +31,10 @@ def display_tag_add_deletion(tags_list:list=None,type='add'):
 
                 if valid_flag_for_removal:
                     st.success(f"{tag_to_remove} has been successfully removed from {category_to_add_new_fiter}")
-                    tags_list.remove(tag_to_remove)
+                    
+                    for tag in tags_list:
+                        tags_list.remove(tag)
+                    
                     db.insert_new_filter_tag(json.dumps(tags_list), category_to_add_new_fiter)
                 time.sleep(1.5)
                 st.rerun()
@@ -442,7 +445,7 @@ try:
                             if add_or_remove_tags:
                                 display_tag_add_deletion(item_tags,type='remove')
 
-
+                        
 
 
 
@@ -466,9 +469,14 @@ try:
                     #category_df = reterive_categories_as_datafrfame()
                     #st.dataframe(category_df,width='stretch',hide_index=True)
                     category_submit_valid=True
-                    with st.expander("Current Categories",expanded=True):
-                        for category in range(0,len(cat)):
-                            st.write(f"{category+1} - {cat[category]}")
+                    
+                    if len(cat) > 0:
+                        with st.expander("Current Categories",expanded=True):
+                            for category in range(0,len(cat)):
+                                st.write(f"{category+1} - {cat[category]}")
+
+                    else :
+                        st.warning("No categories are in the database!")
 
                     toggle_button_to_remove_category=st.toggle("Remove Category")
 
@@ -486,13 +494,13 @@ try:
                                     st.error("Please select a category that you want to remove")
 
                                 if valid_remove_category_flag:
-                                    for cat in category_to_remove:
-                                        db.remove_category_from_database(cat)
+                                    for c in categories:
+                                        print(c)
+                                        db.remove_category_from_database(c)
                                     st.success(f"✅ {category_to_remove} has been successfully removed")
         
                                 time.sleep(1.5)
                                 st.rerun()
-
 
                     else:
 
