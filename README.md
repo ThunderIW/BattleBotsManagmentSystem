@@ -15,7 +15,11 @@ parts and costs
 
 ## 📷 Screenshots
 
+<img width="2529" height="1315" alt="image" src="https://github.com/user-attachments/assets/502724f9-6923-4118-b037-e1797c04e8ce" />
+THis is a screenshot that shows the first page you see in the system 
 
+
+<img width="1063" height="1129" alt="image" src="https://github.com/user-attachments/assets/4a2c9f15-4fd7-4c23-a3be-29d3a9e8765b" />
 
 ---
 
