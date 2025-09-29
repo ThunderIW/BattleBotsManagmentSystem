@@ -12,6 +12,14 @@ parts and costs
 
 ---
 
+
+## 📷 Screenshots
+
+
+
+---
+
+
 ## 🚀 Features
 - **Inventory Management**: log, categorize, and update parts with
   - Item name, description, cost, quantity, and storage location
