@@ -216,9 +216,9 @@ try:
                     else:
                         st.write("Please select an item to delete")
 
-
+                    confirm_button=st.button(f"Delete {item_to_delete_from_database} ", type='primary')
                     if confirm_button:
-                        is_valid = True
+                        is_valid=True
                         if len(item_to_delete_from_database)==0:
                             is_valid=False
                             st.error(f"⚠️ Please select a Item to remove")
@@ -477,7 +477,7 @@ try:
                         categories=db.get_category_from_database()
                         st.subheader("Please select a category that you want to remove")
                         with st.form("Remove Category",clear_on_submit=True):
-                            category_to_remove=st.selectbox("Please select a category that you want to remove",[""]+categories)
+                            category_to_remove=st.multiselect("Please select a category that you want to remove",[""]+categories)
                             category_to_remove_button=st.form_submit_button(label="Remove Category",type="primary")
                             if category_to_remove_button:
                                 valid_remove_category_flag=True
@@ -486,14 +486,12 @@ try:
                                     st.error("Please select a category that you want to remove")
 
                                 if valid_remove_category_flag:
+                                    for cat in category_to_remove:
+                                        db.remove_category_from_database(cat)
                                     st.success(f"✅ {category_to_remove} has been successfully removed")
-                                    db.remove_category_from_database(category_to_remove)
+        
                                 time.sleep(1.5)
                                 st.rerun()
-
-
-
-
 
 
                     else:
