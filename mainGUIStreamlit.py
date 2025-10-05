@@ -3,6 +3,7 @@ import sqlite3
 import streamlit as st
 import streamlit_authenticator  as stauth
 import yaml
+from shiny.ui.busy_indicators import options
 from yaml.loader import SafeLoader
 from streamlit_searchbox import st_searchbox
 import database_backend as db
@@ -12,6 +13,45 @@ import pandas as pd
 from pathlib import Path
 from encrypt_file import encryptAndDecrypt
 import streamlit_shadcn_ui as ui
+
+
+def delete_or_remove_sub_cat(type='add'):
+    if type=='add':
+        with st.form("ADD OR REMOVE subcategory", clear_on_submit=True):
+            SubCat_Name = st.text_input("Please enter the name of the subcategory").capitalize()
+            Category_to_add_sub_cat = st.selectbox(
+                "Please select the Category that you want to add this subcategory to", [""] + current_category)
+            submit_sub_cat = st.form_submit_button("Insert", type="primary")
+
+            if submit_sub_cat:
+                subCat_valid = True
+
+                if len(SubCat_Name) == 0:
+                    subCat_valid = False
+                    st.error("⚠️ Please Enter a subcategory name")
+
+                if len(Category_to_add_sub_cat) == 0:
+                    subCat_valid = False
+                    st.error("⚠️ Please select a Category name")
+
+                if subCat_valid:
+                    db.insertNewSubCategory(SubCat_Name, Category_to_add_sub_cat)
+                    st.success(f"{SubCat_Name} has been successfully added to the {Category_to_add_sub_cat} Category")
+                time.sleep(2)
+                st.rerun()
+
+
+def display_subCategory(Current_Categories,):
+    Cat_to_view=st.selectbox("Select Category", options=[""]+Current_Categories)
+    if Cat_to_view:
+        subCategory=db.get_subCategories(Cat_to_view)
+        if len(subCategory)>0:
+            with st.container(border=True):
+                for cat in range(0,len(subCategory)):
+                    st.write(f"**{cat+1}-{subCategory[cat]}**")
+        else:
+            st.warning(f"No subCategory found for {Cat_to_view}")
+
 
 
 
@@ -38,7 +78,6 @@ def display_tag_add_deletion(tags_list:list=None,type='add'):
 
 
     if type=='add':
-
         with st.form(f"Add new filter tag", clear_on_submit=True):
             new_tag = st.text_input(f"Add new filter tag for {category_to_add_new_fiter}")
             submit_new_filter_tag = st.form_submit_button("Add new filter tag", type='primary')
@@ -126,6 +165,9 @@ def confirm(table):
 
 
 
+
+
+
 def returnItemNames(query:str):
     conn=sqlite3.connect('BattleBots.db')
     #print(query)
@@ -147,6 +189,9 @@ try:
         st.write(f'Welcome *{st.session_state.get("name")}*')
         tab1,tab2,tab3,tab4=st.tabs(["**View Items** 🔍 ", "**Add new Items or Delete Item** (➕/➖)", "**Update Items**","**Admin Page** 🖥️🔑"])
         with tab1:
+            if not db.check_items_exist_in_database():
+                st.warning("⚠️ Database is empty — please add a category or item to get started.")
+
             view_all_items_by_category=st.toggle("View all items by category")
             current_category=db.get_category_from_database()
 
@@ -155,17 +200,15 @@ try:
 
 
                 if chosen_category:
+
+                    chosen_subCategory=st.selectbox(f"Please select which sub Category you want to view {chosen_category}",options=[""])
                     filter_tags=db.get_category_tags(chosen_category)
 
-
-
                     select_tags=st.multiselect("filter options",options=filter_tags)
-
 
                     category_items = db.get_items_by_category(chosen_category,select_tags)
 
                     if len(filter_tags)>0:
-                        print("TEST")
 
                         if len(category_items)==0 and len(select_tags)>0:
                             st.warning(f"⚠️ No items found in the {chosen_category} category with the selected tags")
@@ -245,8 +288,9 @@ try:
                         rooms = db.get_rooms()
                         item_Name=st.text_input("Item Name",key="item_name")
                         item_desc=st.text_area("Item Description",key="item_description")
-                        item_price=st.number_input("Item Price",key="item_price",min_value=0.0,step=0.01)
+                        item_price=st.number_input("Item Price",key="item_price",min_value=0.0,step=0.10)
                         item_category=st.selectbox("Item Category",options=[""]+db.get_category_from_database(),key="item_category")
+                        #SubCategory=st.text_input()
                         storageLocation=st.selectbox("Storage Location",key="storage_location",options=[""]+db.get_rooms())
                         itemQuality=st.number_input("Please enter how many of the item you have",min_value=0,step=1)
                         image= st.file_uploader("Upload an image of the item", type=["jpg", "jpeg", "png"], key="item_image")
@@ -272,6 +316,10 @@ try:
                         if itemQuality==0:
                             Valid=False
                             st.error("⚠️ **Error**: Please enter a Quantity greater than 0")
+
+                        if item_price==0.00:
+                            Valid=False
+                            st.error("⚠️ **Error**: Please enter a Price greater than 0")
 
                         if len(item_category)==0:
                             Valid=False
@@ -506,7 +554,7 @@ try:
                                     st.rerun()
 
                                 if category_submit_valid:
-                                    print(db.insert_new_category(category_name))
+                                    db.insert_new_category(category_name)
                                     st.success(f"✅ {category_name} has been successfully added to the database")
                                     time.sleep(1.5)
                                     st.rerun()
@@ -523,6 +571,16 @@ try:
 
 
 
+
+            with st.expander("Add or Delete subcategories"):
+                delete_subcat=st.toggle("Delete subcategory")
+
+                if delete_subcat:
+                    st.write("TEST")
+
+                else:
+                    display_subCategory(current_category)
+                    delete_or_remove_sub_cat('add')
 
 
             with st.expander("Clear Table info"):

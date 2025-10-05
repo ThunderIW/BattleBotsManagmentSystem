@@ -2,9 +2,17 @@ import sqlite3
 import polars as pl
 import json
 
+from mainGUIStreamlit import confirm
+
+
 def create_Database_connect():
     conn=sqlite3.connect('BattleBots.db')
+    conn.execute("PRAGMA foreign_keys = ON;")
     return conn
+
+
+
+
 
 
 
@@ -318,6 +326,76 @@ def get_item_categories():
     except sqlite3.Error as e:
         return f"Error retrieving item categories: {e}"
 
+
+
+
+
+
+def insertNewSubCategory(name,CategoryName):
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute("""
+        SELECT ID FROM Category WHERE category_name=?
+        """,(CategoryName,))
+        CategoryId=cursor.fetchone()[0]
+        print(CategoryId)
+
+        cursor.execute("""
+        INSERT INTO SubCategory(Name,CategoryID) VALUES(?,?)
+        """,(name,CategoryId))
+
+        conn.commit()
+        conn.close()
+
+    except sqlite3.Error as e:
+        return f"Error adding new SubCategory :{e}"
+
+
+
+def get_subCategories(CategoryName):
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+
+        cursor.execute("""
+               SELECT ID FROM Category WHERE category_name=?
+               """, (CategoryName,))
+        CategoryId = cursor.fetchone()[0]
+
+        cursor.execute("""
+        SELECT Name FROM SubCategory
+        WHERE CategoryID=?
+        """,(CategoryId,))
+        Subcategories=cursor.fetchall()
+        conn.close()
+        Subcategories_list=[Subcategory[0] for Subcategory in Subcategories]
+
+        return Subcategories_list
+
+    except sqlite3.Error as e:
+        return f"Error retrieving sub categories: {e}"
+
+
+def check_items_exist_in_database():
+    try:
+
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute("""
+        SELECT ItemName FROM Items""")
+        items=cursor.fetchall()
+
+        if len(items)==0:
+            return False
+        else:
+            return True
+
+
+
+
+    except sqlite3.Error as e:
+        return f"Error retrieving items: {e}"
 
 
 def insertNewItem(item_name,item_desc,item_price,item_category,room_Location_id:int,image,itemAmount):
