@@ -2,7 +2,6 @@ import sqlite3
 import polars as pl
 import json
 
-from mainGUIStreamlit import confirm
 
 
 def create_Database_connect():
