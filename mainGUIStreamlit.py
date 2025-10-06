@@ -47,8 +47,8 @@ def display_subCategory(Current_Categories,):
         subCategory=db.get_subCategories(Cat_to_view)
         if len(subCategory)>0:
             with st.container(border=True):
-                for cat in range(0,len(subCategory)):
-                    st.write(f"**{cat+1}-{subCategory[cat]}**")
+                for i,sub in enumerate(subCategory,start=1):
+                    st.write(f"{i}-{sub}")
         else:
             st.warning(f"No subCategory found for {Cat_to_view}")
 
@@ -103,7 +103,6 @@ def display_tag_add_deletion(tags_list:list=None,type='add'):
                     print(db.insert_new_filter_tag(json.dumps(tags_list), category_to_add_new_fiter))
                 time.sleep(1.5)
                 st.rerun()
-
 
 
 
@@ -283,64 +282,71 @@ try:
             else:
                 st.subheader("Please add a new item you want to the database")
                 with st.expander("✏️ Add New Items to database"):
-
-                    with st.form("Add new Item",clear_on_submit=True):
-                        rooms = db.get_rooms()
-                        item_Name=st.text_input("Item Name",key="item_name")
-                        item_desc=st.text_area("Item Description",key="item_description")
-                        item_price=st.number_input("Item Price",key="item_price",min_value=0.0,step=0.10)
-                        item_category=st.selectbox("Item Category",options=[""]+db.get_category_from_database(),key="item_category")
-                        #SubCategory=st.text_input()
-                        storageLocation=st.selectbox("Storage Location",key="storage_location",options=[""]+db.get_rooms())
-                        itemQuality=st.number_input("Please enter how many of the item you have",min_value=0,step=1)
-                        image= st.file_uploader("Upload an image of the item", type=["jpg", "jpeg", "png"], key="item_image")
-                        submitted = st.form_submit_button("Add Item",type="primary")
+                    categories = db.get_category_from_database()
+                    item_category = st.selectbox("Please select the type of item  you adding to the database", options=[""] + categories, key="item_category")
+                    if len(db.get_category_from_database()) == 0:
+                        st.warning("No Categories found in the database")
 
 
-                    if submitted:
-                        Valid = True
-                        room_id=db.getRoomID(storageLocation)
-                        if image is not None:
-                            image_data=image.read()
-                        if image is None:
-                            image_data=None
+                    if len(item_category)>0:
+                        with st.form("Add new Item",clear_on_submit=True):
+                            rooms = db.get_rooms()
+
+                            item_Name=st.text_input("Item Name",key="item_name")
+                            item_desc=st.text_area("Item Description",key="item_description")
+                            item_price=st.number_input("Item Price",key="item_price",min_value=0.0,step=0.10)
+
+                            subcategory=st.selectbox("Please select the subcategory",options=[""]+db.get_subCategories(item_category))
+                            storageLocation=st.selectbox("Storage Location",key="storage_location",options=[""]+rooms)
+                            itemQuality=st.number_input("Please enter how many of the item you have",min_value=0,step=1)
+                            image= st.file_uploader("Upload an image of the item", type=["jpg", "jpeg", "png"], key="item_image")
+                            submitted = st.form_submit_button("Add Item",type="primary")
 
 
-                        itemInDatabaseCheck=db.item_Or_room_exists(mode="Item",item=item_Name)
+                        if submitted:
+                            Valid = True
+                            room_id=db.getRoomID(storageLocation)
+                            if image is not None:
+                                image_data=image.read()
+                            if image is None:
+                                image_data=None
 
 
-                        if len(item_Name)==0:
-                            Valid=False
-                            st.error("⚠️ **Error**: Please enter the items name")
+                            itemInDatabaseCheck=db.item_Or_room_exists(mode="Item",item=item_Name)
 
-                        if itemQuality==0:
-                            Valid=False
-                            st.error("⚠️ **Error**: Please enter a Quantity greater than 0")
 
-                        if item_price==0.00:
-                            Valid=False
-                            st.error("⚠️ **Error**: Please enter a Price greater than 0")
+                            if len(item_Name)==0:
+                                Valid=False
+                                st.error("⚠️ **Error**: Please enter the items name")
 
-                        if len(item_category)==0:
-                            Valid=False
-                            st.error("⚠️ **Error**: Please enter a Category")
+                            if itemQuality==0:
+                                Valid=False
+                                st.error("⚠️ **Error**: Please enter a Quantity greater than 0")
 
-                        if len(storageLocation)==0:
-                            Valid=False
-                            st.error("⚠️ **Error**: Please select a Room")
+                            if item_price==0.00:
+                                Valid=False
+                                st.error("⚠️ **Error**: Please enter a Price greater than 0")
 
-                        elif itemInDatabaseCheck:
-                            Valid = False
-                            st.error(f"{item_Name} already exist")
+                            if len(item_category)==0:
+                                Valid=False
+                                st.error("⚠️ **Error**: Please enter a Category")
 
-                        if not itemInDatabaseCheck and Valid:
-                            db.insertNewItem(item_Name, item_desc, item_price, item_category, room_id, image_data, itemQuality)
-                            st.success(f"{item_Name} has been added to database")
-                            time.sleep(2.0)
+                            if len(storageLocation)==0:
+                                Valid=False
+                                st.error("⚠️ **Error**: Please select a Room")
+
+                            elif itemInDatabaseCheck:
+                                Valid = False
+                                st.error(f"{item_Name} already exist")
+
+                            if not itemInDatabaseCheck and Valid:
+                                db.insertNewItem(item_Name, item_desc, item_price, item_category, room_id, image_data, itemQuality)
+                                st.success(f"{item_Name} has been added to database")
+                                time.sleep(2.0)
+                                st.rerun()
+
+                            time.sleep(3.0)
                             st.rerun()
-
-                        time.sleep(3.0)
-                        st.rerun()
 
                 with st.expander("🏢 Add a new room location"):
                     with st.form("Add new room to database"):
