@@ -158,7 +158,7 @@ def add_new_room_to_database(room_name,room_desc,Room_Image=None):
         return f"Issue adding new room to database: {e} "
 
 
-
+'''
 def get_items_by_either_category_or_subcategory(category,subCategory,tags,mode=0):
     filter_item = []
     print(mode)
@@ -204,9 +204,9 @@ def get_items_by_either_category_or_subcategory(category,subCategory,tags,mode=0
     return items
 
 
-
-
 '''
+
+
 def get_items_by_subCategory(subCategory,tags:list):
     filter_item=[]
     try:
@@ -214,7 +214,7 @@ def get_items_by_subCategory(subCategory,tags:list):
         cursor=conn.cursor()
 
         cursor.execute("""
-                SELECT ItemName,ItemDescription,ItemPrice,ItemQuanity,RoomName AS Item_Stroage_Location,part_image FROM
+                SELECT ItemName,ItemDescription,ItemPrice,ItemQuanity,RoomName AS Item_Stroage_Location,part_image,SubCategory FROM
                 Items I JOIN Room R on I.RoomLOCATIONStorageID=R.RoomId WHERE I.SubCategory= ? 
 
                 """, (subCategory,))
@@ -257,7 +257,7 @@ def get_items_by_category(category, tags:list):
 
 
     cursor.execute("""
-        SELECT ItemName,ItemDescription,ItemPrice,ItemQuanity,RoomName AS Item_Stroage_Location,part_image FROM
+        SELECT ItemName,ItemDescription,ItemPrice,ItemQuanity,RoomName AS Item_Stroage_Location,part_image,SubCategory FROM
         Items I JOIN Room R on I.RoomLOCATIONStorageID=R.RoomId WHERE I.ItemCategory= ? 
     
         """,(category,))
@@ -280,7 +280,7 @@ def get_items_by_category(category, tags:list):
         return items
 
     return items
-'''
+
 
 
 def get_rooms():

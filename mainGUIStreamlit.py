@@ -207,9 +207,8 @@ try:
 
                     if chosen_subCategory:
                         select_tags = st.multiselect("filter options", options=filter_tags)
-                        subcategory_items=db.get_items_by_either_category_or_subcategory(category="", subCategory=chosen_subCategory,
-                                                                                         mode=1,tags=select_tags)
-                        #subcategory_items=db.get_items_by_subCategory(chosen_subCategory,select_tags)
+
+                        subcategory_items=db.get_items_by_subCategory(chosen_subCategory,select_tags)
                         display_items(subcategory_items, chosen_category, select_tags)
 
 
@@ -217,8 +216,8 @@ try:
 
                         select_tags=st.multiselect("filter options",options=filter_tags)
 
-                        #category_items = db.get_items_by_category(chosen_category,select_tags)
-                        category_items=db.get_items_by_either_category_or_subcategory(category=chosen_category, subCategory="",tags=select_tags)
+                        category_items = db.get_items_by_category(chosen_category,select_tags)
+                        #category_items=db.get_items_by_either_category_or_subcategory(category=chosen_category, subCategory="",tags=select_tags)
                         display_items(category_items, chosen_category, select_tags)
 
 
