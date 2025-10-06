@@ -100,7 +100,7 @@ def display_tag_add_deletion(tags_list:list=None,type='add'):
                     st.success(
                         f'{new_tag} tag for {category_to_add_new_fiter} has been added to database')
                     #print(tags_list)
-                    print(db.insert_new_filter_tag(json.dumps(tags_list), category_to_add_new_fiter))
+                    db.insert_new_filter_tag(json.dumps(tags_list), category_to_add_new_fiter)
                 time.sleep(1.5)
                 st.rerun()
 
@@ -118,13 +118,14 @@ def reterive_categories_as_datafrfame(retrive_column="cat"):
 
 def display_items(category_items,chosen_category,selected_tags):
     for idx,item in enumerate(category_items):
-        item_name,item_desc,price,stock,item_loc,ImageOfPart=item
-        with st.expander(f"{chosen_category}_{idx+1}",expanded=True):
+        item_name,item_desc,price,stock,item_loc,ImageOfPart,subCategory=item
+        with st.expander(f"{chosen_category} {idx+1}",expanded=True):
             if ImageOfPart is not None:
                 st.image(ImageOfPart,width=200)
             st.write(f"**Item Name:** {str(item_name).capitalize()}")
             st.write(f"**Item Description:** {item_desc}")
             st.write(f"**Item Price:** CAD $ {price:.2f}")
+            st.write(f"**Subcategory:** {subCategory}")
             st.write(f"**Currently in stock**: {stock}")
             st.write(f"**Storage Location:** {item_loc}")
 
@@ -188,9 +189,6 @@ try:
         st.write(f'Welcome *{st.session_state.get("name")}*')
         tab1,tab2,tab3,tab4=st.tabs(["**View Items** 🔍 ", "**Add new Items or Delete Item** (➕/➖)", "**Update Items**","**Admin Page** 🖥️🔑"])
         with tab1:
-            if not db.check_items_exist_in_database():
-                st.warning("⚠️ Database is empty — please add a category or item to get started.")
-
             view_all_items_by_category=st.toggle("View all items by category")
             current_category=db.get_category_from_database()
 
@@ -200,25 +198,42 @@ try:
 
                 if chosen_category:
 
-                    chosen_subCategory=st.selectbox(f"Please select which sub Category you want to view {chosen_category}",options=[""])
+                    chosen_subCategory=st.selectbox(f"Please select which sub Category you want to view {chosen_category}",options=[""]+db.get_subCategories(chosen_category))
                     filter_tags=db.get_category_tags(chosen_category)
 
-                    select_tags=st.multiselect("filter options",options=filter_tags)
+                    if len(filter_tags)==0:
+                        st.warning(
+                            f"⚠️ There are no **filter tags** found for {chosen_category} category please add them in the admin page ")
 
-                    category_items = db.get_items_by_category(chosen_category,select_tags)
+                    if chosen_subCategory:
+                        select_tags = st.multiselect("filter options", options=filter_tags)
+                        subcategory_items=db.get_items_by_either_category_or_subcategory(category="", subCategory=chosen_subCategory,
+                                                                                         mode=1,tags=select_tags)
+                        #subcategory_items=db.get_items_by_subCategory(chosen_subCategory,select_tags)
+                        display_items(subcategory_items, chosen_category, select_tags)
 
-                    if len(filter_tags)>0:
 
-                        if len(category_items)==0 and len(select_tags)>0:
-                            st.warning(f"⚠️ No items found in the {chosen_category} category with the selected tags")
-
-                        elif len(category_items)==0 and len(select_tags)==0:
-                            st.warning(f"⚠️ No items found in the {chosen_category} category")
                     else:
-                        st.warning(f"⚠️ There are no **filter tags** found for {chosen_category} category please add them in the admin page ")
+
+                        select_tags=st.multiselect("filter options",options=filter_tags)
+
+                        #category_items = db.get_items_by_category(chosen_category,select_tags)
+                        category_items=db.get_items_by_either_category_or_subcategory(category=chosen_category, subCategory="",tags=select_tags)
+                        display_items(category_items, chosen_category, select_tags)
 
 
-                    display_items(category_items,chosen_category,select_tags)
+                        if len(filter_tags)>0:
+
+                            if len(category_items)==0 and len(select_tags)>0:
+                                st.warning(f"⚠️ No items found in the {chosen_category} category with the selected tags")
+
+                            elif len(category_items)==0 and len(select_tags)==0:
+                                st.warning(f"⚠️ No items found in the {chosen_category} category")
+
+
+
+
+
 
 
 
@@ -227,16 +242,19 @@ try:
                 st.subheader("View Items")
                 selected_item=st_searchbox(returnItemNames,placeholder="Search for an item",key="LookupItem")
                 if selected_item:
-                    item_name, item_desc, price, category, roomLocationID,ImageOfPart,ItemAmount=db.get_item_details(selected_item)
-                    if ImageOfPart is not None:
-                        st.image(ImageOfPart,width=200)
+                    item_name, item_desc, price, category, roomLocationID,ImageOfPart,ItemAmount,subCategory=db.get_item_details(selected_item)
+                    print(category)
+                    print(subCategory)
 
                     with st.expander(expanded=True,label='Item'):
+                        if ImageOfPart is not None:
+                            st.image(ImageOfPart, width=200)
                         st.write(f"**Item Name:** {item_name}")
                         st.write(f"**Item Description:** {item_desc}")
                         st.write(f"**Item Price:** CAD $ {price:.2f}")
                         st.write(f"**Amount**: {ItemAmount}")
                         st.write(f"**Item Category:** {category}")
+                        st.write(f"**Sub Category:** {subCategory}")
                         room_name = db.get_rooms()[roomLocationID-1] if roomLocationID else "Unknown"
                         st.write(f"**Storage Location:** {room_name}")
 
@@ -327,6 +345,12 @@ try:
                                 Valid=False
                                 st.error("⚠️ **Error**: Please enter a Price greater than 0")
 
+
+                            if len(subcategory)==0:
+                                Valid = False
+                                st.error("⚠️ **Error**: Please Select a subcategory")
+
+
                             if len(item_category)==0:
                                 Valid=False
                                 st.error("⚠️ **Error**: Please enter a Category")
@@ -340,7 +364,7 @@ try:
                                 st.error(f"{item_Name} already exist")
 
                             if not itemInDatabaseCheck and Valid:
-                                db.insertNewItem(item_Name, item_desc, item_price, item_category, room_id, image_data, itemQuality)
+                                db.insertNewItem(item_Name, item_desc, item_price, item_category, room_id, image_data, itemQuality,subcategory)
                                 st.success(f"{item_Name} has been added to database")
                                 time.sleep(2.0)
                                 st.rerun()

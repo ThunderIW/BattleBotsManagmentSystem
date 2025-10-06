@@ -12,10 +12,6 @@ def create_Database_connect():
 
 
 
-
-
-
-
 def get_category_from_database():
     try:
         conn=create_Database_connect()
@@ -162,16 +158,110 @@ def add_new_room_to_database(room_name,room_desc,Room_Image=None):
     except sqlite3.Error as e:
         return f"Issue adding new room to database: {e} "
 
-def get_items_by_category(category,tags:list):
+
+
+def get_items_by_either_category_or_subcategory(category,subCategory,tags,mode=0):
+    filter_item = []
+    print(mode)
+    #mode=0: is for getting Item by the category
+    if mode==0:
+        conn = create_Database_connect()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+                SELECT ItemName,ItemDescription,ItemPrice,ItemQuanity,RoomName AS Item_Stroage_Location,part_image, SubCategory FROM
+                Items I JOIN Room R on I.RoomLOCATIONStorageID=R.RoomId WHERE I.ItemCategory= ? 
+
+                """, (category,))
+
+        items = cursor.fetchall()
+        conn.close()
+    # mode=0: is for getting Item by the Subcategory
+    if mode==1:
+        conn = create_Database_connect()
+        cursor = conn.cursor()
+        cursor.execute("""
+                       SELECT ItemName,ItemDescription,ItemPrice,ItemQuanity,RoomName AS Item_Stroage_Location,part_image,SubCategory FROM
+                       Items I JOIN Room R on I.RoomLOCATIONStorageID=R.RoomId WHERE I.SubCategory= ? 
+
+                       """, (subCategory,))
+
+        items = cursor.fetchall()
+        conn.close()
+
+    if len(tags) > 0:
+        for item in items:
+            item_name = item[0]
+            item_desc = item[1]
+            for tag in tags:
+                if tag.lower() in item_name.lower() or tag.lower() in item_desc.lower():
+                    filter_item.append(item)
+
+        return filter_item
+
+    if len(tags) == 0:
+        return items
+
+    return items
+
+
+
+
+'''
+def get_items_by_subCategory(subCategory,tags:list):
+    filter_item=[]
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+
+        cursor.execute("""
+                SELECT ItemName,ItemDescription,ItemPrice,ItemQuanity,RoomName AS Item_Stroage_Location,part_image FROM
+                Items I JOIN Room R on I.RoomLOCATIONStorageID=R.RoomId WHERE I.SubCategory= ? 
+
+                """, (subCategory,))
+        items = cursor.fetchall()
+        conn.close()
+
+        if len(tags) > 0:
+            for item in items:
+                item_name = item[0]
+                item_desc = item[1]
+                for tag in tags:
+                    if tag.lower() in item_name.lower() or tag.lower() in item_desc.lower():
+                        filter_item.append(item)
+
+            return filter_item
+
+        if len(tags) == 0:
+            return items
+
+        return items
+
+
+
+
+    except sqlite3.Error as e:
+        return f"Error retrieving items from database: {e}"
+
+
+
+
+
+
+def get_items_by_category(category, tags:list):
+    if tags is None:
+        tags = []
+    print(tags)
     filter_item=[]
     conn=create_Database_connect()
     cursor=conn.cursor()
 
+
     cursor.execute("""
-    SELECT ItemName,ItemDescription,ItemPrice,ItemQuanity,RoomName AS Item_Stroage_Location,part_image FROM
-    Items I JOIN Room R on I.RoomLOCATIONStorageID=R.RoomId WHERE I.ItemCategory= ?
+        SELECT ItemName,ItemDescription,ItemPrice,ItemQuanity,RoomName AS Item_Stroage_Location,part_image FROM
+        Items I JOIN Room R on I.RoomLOCATIONStorageID=R.RoomId WHERE I.ItemCategory= ? 
     
-    """,(category,))
+        """,(category,))
     items=cursor.fetchall()
     conn.close()
 
@@ -191,6 +281,8 @@ def get_items_by_category(category,tags:list):
         return items
 
     return items
+'''
+
 
 def get_rooms():
     room_list=[]
@@ -398,13 +490,13 @@ def check_items_exist_in_database():
         return f"Error retrieving items: {e}"
 
 
-def insertNewItem(item_name,item_desc,item_price,item_category,room_Location_id:int,image,itemAmount):
+def insertNewItem(item_name,item_desc,item_price,item_category,room_Location_id:int,image,itemAmount,Subcategory):
     conn=create_Database_connect()
     cursor=conn.cursor()
     cursor.execute("""
-    INSERT INTO Items (ItemName, ItemDescription, ItemPrice, ItemCategory,RoomLOCATIONStorageID,part_image,ItemQuanity)
-    VALUES (?, ?, ?, ?,?,?,?)
-    """, (item_name, item_desc, item_price, item_category,room_Location_id,image,itemAmount))
+    INSERT INTO Items (ItemName, ItemDescription, ItemPrice, ItemCategory,RoomLOCATIONStorageID,part_image,ItemQuanity,SubCategory)
+    VALUES (?, ?, ?, ?,?,?,?,?)
+    """, (item_name, item_desc, item_price, item_category,room_Location_id,image,itemAmount,Subcategory))
     conn.commit()
     conn.close()
 
@@ -412,7 +504,7 @@ def get_item_details(item_name):
     conn=create_Database_connect()
     cursor=conn.cursor()
     cursor.execute("""
-    SELECT ItemName, ItemDescription, ItemPrice, ItemCategory, RoomLOCATIONStorageID,part_image,ItemQuanity
+    SELECT ItemName, ItemDescription, ItemPrice, ItemCategory, RoomLOCATIONStorageID,part_image,ItemQuanity,SubCategory
     FROM Items
     WHERE ItemName = ?
     """, (item_name,))
