@@ -19,9 +19,9 @@ def display_tag_add_deletion(tags_list:list=None,type='add'):
 
     if type=='remove':
         with st.form(f" Remove filter tag", clear_on_submit=True):
-            tag_to_remove = st.selectbox("Please select which tag you want to remove", options=[""] + item_tags)
+            tag_to_remove = st.multiselect("Please select which tag you want to remove", options=[""] + item_tags)
             remove_tag_button = st.form_submit_button(f"Remove Tag", type="primary")
-
+            print(tag_to_remove)
             if remove_tag_button:
                 valid_flag_for_removal = True
                 if len(tag_to_remove) == 0:
@@ -29,12 +29,15 @@ def display_tag_add_deletion(tags_list:list=None,type='add'):
                     st.error("Please select at least one tag to remove")
 
                 if valid_flag_for_removal:
+                    for tag in tag_to_remove:
+                        tags_list.remove(tag)
+                        
                     st.success(f"{tag_to_remove} has been successfully removed from {category_to_add_new_fiter}")
-                    tags_list.remove(tag_to_remove)
+                    
+                    
                     db.insert_new_filter_tag(json.dumps(tags_list), category_to_add_new_fiter)
                 time.sleep(1.5)
                 st.rerun()
-
 
 
     if type=='add':
@@ -74,7 +77,6 @@ def reterive_categories_as_datafrfame(retrive_column="cat"):
 
     df=pd.read_sql_query("SELECT category_name as Category FROM Category",conn)
     return df
-
 
 
 
@@ -209,9 +211,16 @@ try:
                 Delete_type=st.selectbox(label="Please select what you want to delete",options=["","Room","Item"])
                 if Delete_type=="Item":
                     items = db.get_items()
-                    item_to_delete_from_database=st.selectbox("Select the item",options=[""]+items)
+                    item_to_delete_from_database=st.multiselect("Select the item",options=items)
+
+                    if item_to_delete_from_database:
+                        confirm_button = st.button(f"Delete {item_to_delete_from_database} ", type='primary')
+                    else:
+                        st.write("Please select an item to delete")
+
                     confirm_button=st.button(f"Delete {item_to_delete_from_database} ", type='primary')
                     if confirm_button:
+                        is_valid=True
                         if len(item_to_delete_from_database)==0:
                             is_valid=False
                             st.error(f"⚠️ Please select a Item to remove")
@@ -419,6 +428,7 @@ try:
                     if category_to_add_new_fiter:
 
                         item_tags=db.get_category_tags(category_to_add_new_fiter)
+                        
 
 
                         if len(item_tags)>0:
@@ -434,6 +444,7 @@ try:
                             if add_or_remove_tags:
                                 display_tag_add_deletion(item_tags,type='remove')
 
+                        
 
 
 
@@ -457,9 +468,14 @@ try:
                     #category_df = reterive_categories_as_datafrfame()
                     #st.dataframe(category_df,width='stretch',hide_index=True)
                     category_submit_valid=True
-                    with st.expander("Current Categories",expanded=True):
-                        for category in range(0,len(cat)):
-                            st.write(f"{category+1} - {cat[category]}")
+                    
+                    if len(cat) > 0:
+                        with st.expander("Current Categories",expanded=True):
+                            for category in range(0,len(cat)):
+                                st.write(f"{category+1} - {cat[category]}")
+
+                    else :
+                        st.warning("No categories are in the database!")
 
                     toggle_button_to_remove_category=st.toggle("Remove Category")
 
@@ -468,7 +484,7 @@ try:
                         categories=db.get_category_from_database()
                         st.subheader("Please select a category that you want to remove")
                         with st.form("Remove Category",clear_on_submit=True):
-                            category_to_remove=st.selectbox("Please select a category that you want to remove",[""]+categories)
+                            category_to_remove=st.multiselect("Please select a category that you want to remove",[""]+categories)
                             category_to_remove_button=st.form_submit_button(label="Remove Category",type="primary")
                             if category_to_remove_button:
                                 valid_remove_category_flag=True
@@ -477,15 +493,13 @@ try:
                                     st.error("Please select a category that you want to remove")
 
                                 if valid_remove_category_flag:
+                                    for c in categories:
+                                        print(c)
+                                        db.remove_category_from_database(c)
                                     st.success(f"✅ {category_to_remove} has been successfully removed")
-                                    db.remove_category_from_database(category_to_remove)
+        
                                 time.sleep(1.5)
                                 st.rerun()
-
-
-
-
-
 
                     else:
 
