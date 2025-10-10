@@ -78,7 +78,7 @@ def display_tag_add_deletion(tags_list:list=None,type='add'):
 
     if type=='add':
         with st.form(f"Add new filter tag", clear_on_submit=True):
-            new_tag = st.text_input(f"Add new filter tag for {category_to_add_new_fiter}")
+            new_tag = st.text_input(f"Add new filter tag for {category_to_add_new_fiter}").capitalize()
             submit_new_filter_tag = st.form_submit_button("Add new filter tag", type='primary')
 
 
@@ -241,8 +241,8 @@ try:
                 selected_item=st_searchbox(returnItemNames,placeholder="Search for an item",key="LookupItem")
                 if selected_item:
                     item_name, item_desc, price, category, roomLocationID,ImageOfPart,ItemAmount,subCategory=db.get_item_details(selected_item)
-                    print(category)
-                    print(subCategory)
+                    #print(category)
+                    #print(subCategory)
 
                     with st.expander(expanded=True,label='Item'):
                         if ImageOfPart is not None:
@@ -493,7 +493,6 @@ try:
                     categories=[cat[0] for cat in reterive_categories_as_datafrfame().values]
                     category_to_add_new_fiter=st.selectbox("Please select a category that you want to add new filter ",[""]+categories)
                     if category_to_add_new_fiter:
-
                         item_tags=db.get_category_tags(category_to_add_new_fiter)
 
 

@@ -61,7 +61,7 @@ def remove_category_from_database(category_name):
 
 def insert_new_filter_tag(new_List:str,category):
     try:
-        print(type(new_List))
+        #print(type(new_List))
         conn=create_Database_connect()
         cursor=conn.cursor()
 
@@ -199,7 +199,7 @@ def get_items_by_subCategory(subCategory,tags:list):
 def get_items_by_category(category, tags:list):
     if tags is None:
         tags = []
-    print(tags)
+    #print(tags)
     filter_item=[]
     conn=create_Database_connect()
     cursor=conn.cursor()
@@ -342,7 +342,7 @@ def get_all_items_by_category(ItemCategory):
         
         """,(ItemCategory,))
         items_by_category=cursor.fetchall()
-        print(items_by_category)
+        #print(items_by_category)
         columns_for_item_by_category=[desc[0] for desc in cursor.description]
         df=pl.DataFrame(items_by_category,schema=columns_for_item_by_category,orient="row")
         conn.close()
@@ -379,7 +379,7 @@ def insertNewSubCategory(name,CategoryName):
         SELECT ID FROM Category WHERE category_name=?
         """,(CategoryName,))
         CategoryId=cursor.fetchone()[0]
-        print(CategoryId)
+        #print(CategoryId)
 
         cursor.execute("""
         INSERT INTO SubCategory(Name,CategoryID) VALUES(?,?)
