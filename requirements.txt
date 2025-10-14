@@ -8,4 +8,5 @@ streamlit_searchbox==0.1.22
 streamlit_shadcn_ui
 python-dotenv
 streamlit-calendar
+pendulum
 
