@@ -14,6 +14,45 @@ from encrypt_file import encryptAndDecrypt
 import streamlit_shadcn_ui as ui
 
 
+def delete_or_remove_sub_cat(type='add'):
+    if type=='add':
+        with st.form("ADD OR REMOVE subcategory", clear_on_submit=True):
+            SubCat_Name = st.text_input("Please enter the name of the subcategory").capitalize()
+            Category_to_add_sub_cat = st.selectbox(
+                "Please select the Category that you want to add this subcategory to", [""] + current_category)
+            submit_sub_cat = st.form_submit_button("Insert", type="primary")
+
+            if submit_sub_cat:
+                subCat_valid = True
+
+                if len(SubCat_Name) == 0:
+                    subCat_valid = False
+                    st.error("⚠️ Please Enter a subcategory name")
+
+                if len(Category_to_add_sub_cat) == 0:
+                    subCat_valid = False
+                    st.error("⚠️ Please select a Category name")
+
+                if subCat_valid:
+                    db.insertNewSubCategory(SubCat_Name, Category_to_add_sub_cat)
+                    st.success(f"{SubCat_Name} has been successfully added to the {Category_to_add_sub_cat} Category")
+                time.sleep(2)
+                st.rerun()
+
+
+def display_subCategory(Current_Categories,):
+    Cat_to_view=st.selectbox("Select Category", options=[""]+Current_Categories)
+    if Cat_to_view:
+        subCategory=db.get_subCategories(Cat_to_view)
+        if len(subCategory)>0:
+            with st.container(border=True):
+                for i,sub in enumerate(subCategory,start=1):
+                    st.write(f"{i}-{sub}")
+        else:
+            st.warning(f"No subCategory found for {Cat_to_view}")
+
+
+
 
 def display_tag_add_deletion(tags_list:list=None,type='add'):
 
@@ -41,9 +80,8 @@ def display_tag_add_deletion(tags_list:list=None,type='add'):
 
 
     if type=='add':
-
         with st.form(f"Add new filter tag", clear_on_submit=True):
-            new_tag = st.text_input(f"Add new filter tag for {category_to_add_new_fiter}")
+            new_tag = st.text_input(f"Add new filter tag for {category_to_add_new_fiter}").capitalize()
             submit_new_filter_tag = st.form_submit_button("Add new filter tag", type='primary')
 
 
@@ -64,10 +102,9 @@ def display_tag_add_deletion(tags_list:list=None,type='add'):
                     st.success(
                         f'{new_tag} tag for {category_to_add_new_fiter} has been added to database')
                     #print(tags_list)
-                    print(db.insert_new_filter_tag(json.dumps(tags_list), category_to_add_new_fiter))
+                    db.insert_new_filter_tag(json.dumps(tags_list), category_to_add_new_fiter)
                 time.sleep(1.5)
                 st.rerun()
-
 
 
 
@@ -82,13 +119,14 @@ def reterive_categories_as_datafrfame(retrive_column="cat"):
 
 def display_items(category_items,chosen_category,selected_tags):
     for idx,item in enumerate(category_items):
-        item_name,item_desc,price,stock,item_loc,ImageOfPart=item
-        with st.expander(f"{chosen_category}_{idx+1}",expanded=True):
+        item_name,item_desc,price,stock,item_loc,ImageOfPart,subCategory=item
+        with st.expander(f"{chosen_category} {idx+1}",expanded=True):
             if ImageOfPart is not None:
                 st.image(ImageOfPart,width=200)
             st.write(f"**Item Name:** {str(item_name).capitalize()}")
             st.write(f"**Item Description:** {item_desc}")
             st.write(f"**Item Price:** CAD $ {price:.2f}")
+            st.write(f"**Subcategory:** {subCategory}")
             st.write(f"**Currently in stock**: {stock}")
             st.write(f"**Storage Location:** {item_loc}")
 
@@ -128,6 +166,9 @@ def confirm(table):
 
 
 
+
+
+
 def returnItemNames(query:str):
     conn=sqlite3.connect('BattleBots.db')
     #print(query)
@@ -157,28 +198,42 @@ try:
 
 
                 if chosen_category:
+
+                    chosen_subCategory=st.selectbox(f"Please select which sub Category you want to view {chosen_category}",options=[""]+db.get_subCategories(chosen_category))
                     filter_tags=db.get_category_tags(chosen_category)
 
+                    if len(filter_tags)==0:
+                        st.warning(
+                            f"⚠️ There are no **filter tags** found for {chosen_category} category please add them in the admin page ")
+
+                    if chosen_subCategory:
+                        select_tags = st.multiselect("filter options", options=filter_tags)
+
+                        subcategory_items=db.get_items_by_subCategory(chosen_subCategory,select_tags)
+                        display_items(subcategory_items, chosen_category, select_tags)
 
 
-                    select_tags=st.multiselect("filter options",options=filter_tags)
-
-
-                    category_items = db.get_items_by_category(chosen_category,select_tags)
-
-                    if len(filter_tags)>0:
-                        print("TEST")
-
-                        if len(category_items)==0 and len(select_tags)>0:
-                            st.warning(f"⚠️ No items found in the {chosen_category} category with the selected tags")
-
-                        elif len(category_items)==0 and len(select_tags)==0:
-                            st.warning(f"⚠️ No items found in the {chosen_category} category")
                     else:
-                        st.warning(f"⚠️ There are no **filter tags** found for {chosen_category} category please add them in the admin page ")
+
+                        select_tags=st.multiselect("filter options",options=filter_tags)
+
+                        category_items = db.get_items_by_category(chosen_category,select_tags)
+                        #category_items=db.get_items_by_either_category_or_subcategory(category=chosen_category, subCategory="",tags=select_tags)
+                        display_items(category_items, chosen_category, select_tags)
 
 
-                    display_items(category_items,chosen_category,select_tags)
+                        if len(filter_tags)>0:
+
+                            if len(category_items)==0 and len(select_tags)>0:
+                                st.warning(f"⚠️ No items found in the {chosen_category} category with the selected tags")
+
+                            elif len(category_items)==0 and len(select_tags)==0:
+                                st.warning(f"⚠️ No items found in the {chosen_category} category")
+
+
+
+
+
 
 
 
@@ -187,16 +242,19 @@ try:
                 st.subheader("View Items")
                 selected_item=st_searchbox(returnItemNames,placeholder="Search for an item",key="LookupItem")
                 if selected_item:
-                    item_name, item_desc, price, category, roomLocationID,ImageOfPart,ItemAmount=db.get_item_details(selected_item)
-                    if ImageOfPart is not None:
-                        st.image(ImageOfPart,width=200)
+                    item_name, item_desc, price, category, roomLocationID,ImageOfPart,ItemAmount,subCategory=db.get_item_details(selected_item)
+                    #print(category)
+                    #print(subCategory)
 
                     with st.expander(expanded=True,label='Item'):
+                        if ImageOfPart is not None:
+                            st.image(ImageOfPart, width=200)
                         st.write(f"**Item Name:** {item_name}")
                         st.write(f"**Item Description:** {item_desc}")
                         st.write(f"**Item Price:** CAD $ {price:.2f}")
                         st.write(f"**Amount**: {ItemAmount}")
                         st.write(f"**Item Category:** {category}")
+                        st.write(f"**Sub Category:** {subCategory}")
                         room_name = db.get_rooms()[roomLocationID-1] if roomLocationID else "Unknown"
                         st.write(f"**Storage Location:** {room_name}")
 
@@ -249,59 +307,77 @@ try:
             else:
                 st.subheader("Please add a new item you want to the database")
                 with st.expander("✏️ Add New Items to database"):
-
-                    with st.form("Add new Item",clear_on_submit=True):
-                        rooms = db.get_rooms()
-                        item_Name=st.text_input("Item Name",key="item_name")
-                        item_desc=st.text_area("Item Description",key="item_description")
-                        item_price=st.number_input("Item Price",key="item_price",min_value=0.0,step=0.01)
-                        item_category=st.selectbox("Item Category",options=[""]+db.get_category_from_database(),key="item_category")
-                        storageLocation=st.selectbox("Storage Location",key="storage_location",options=[""]+db.get_rooms())
-                        itemQuality=st.number_input("Please enter how many of the item you have",min_value=0,step=1)
-                        image= st.file_uploader("Upload an image of the item", type=["jpg", "jpeg", "png"], key="item_image")
-                        submitted = st.form_submit_button("Add Item",type="primary")
+                    categories = db.get_category_from_database()
+                    item_category = st.selectbox("Please select the type of item  you adding to the database", options=[""] + categories, key="item_category")
+                    if len(db.get_category_from_database()) == 0:
+                        st.warning("No Categories found in the database")
 
 
-                    if submitted:
-                        Valid = True
-                        room_id=db.getRoomID(storageLocation)
-                        if image is not None:
-                            image_data=image.read()
-                        if image is None:
-                            image_data=None
+                    if len(item_category)>0:
+                        with st.form("Add new Item",clear_on_submit=True):
+                            rooms = db.get_rooms()
+
+                            item_Name=st.text_input("Item Name",key="item_name")
+                            item_desc=st.text_area("Item Description",key="item_description")
+                            item_price=st.number_input("Item Price",key="item_price",min_value=0.0,step=0.10)
+
+                            subcategory=st.selectbox("Please select the subcategory",options=[""]+db.get_subCategories(item_category))
+                            storageLocation=st.selectbox("Storage Location",key="storage_location",options=[""]+rooms)
+                            itemQuality=st.number_input("Please enter how many of the item you have",min_value=0,step=1)
+                            image= st.file_uploader("Upload an image of the item", type=["jpg", "jpeg", "png"], key="item_image")
+                            submitted = st.form_submit_button("Add Item",type="primary")
 
 
-                        itemInDatabaseCheck=db.item_Or_room_exists(mode="Item",item=item_Name)
+                        if submitted:
+                            Valid = True
+                            room_id=db.getRoomID(storageLocation)
+                            if image is not None:
+                                image_data=image.read()
+                            if image is None:
+                                image_data=None
 
 
-                        if len(item_Name)==0:
-                            Valid=False
-                            st.error("⚠️ **Error**: Please enter the items name")
+                            itemInDatabaseCheck=db.item_Or_room_exists(mode="Item",item=item_Name)
 
-                        if itemQuality==0:
-                            Valid=False
-                            st.error("⚠️ **Error**: Please enter a Quantity greater than 0")
 
-                        if len(item_category)==0:
-                            Valid=False
-                            st.error("⚠️ **Error**: Please enter a Category")
+                            if len(item_Name)==0:
+                                Valid=False
+                                st.error("⚠️ **Error**: Please enter the items name")
 
-                        if len(storageLocation)==0:
-                            Valid=False
-                            st.error("⚠️ **Error**: Please select a Room")
+                            if itemQuality==0:
+                                Valid=False
+                                st.error("⚠️ **Error**: Please enter a Quantity greater than 0")
 
-                        elif itemInDatabaseCheck:
-                            Valid = False
-                            st.error(f"{item_Name} already exist")
+                            if item_price==0.00:
+                                Valid=False
+                                st.error("⚠️ **Error**: Please enter a Price greater than 0")
 
-                        if not itemInDatabaseCheck and Valid:
-                            db.insertNewItem(item_Name, item_desc, item_price, item_category, room_id, image_data, itemQuality)
-                            st.success(f"{item_Name} has been added to database")
-                            time.sleep(2.0)
+
+                            if len(subcategory)==0:
+                                Valid = False
+                                st.error("⚠️ **Error**: Please Select a subcategory")
+
+
+                            if len(item_category)==0:
+                                Valid=False
+                                st.error("⚠️ **Error**: Please enter a Category")
+
+                            if len(storageLocation)==0:
+                                Valid=False
+                                st.error("⚠️ **Error**: Please select a Room")
+
+                            elif itemInDatabaseCheck:
+                                Valid = False
+                                st.error(f"{item_Name} already exist")
+
+                            if not itemInDatabaseCheck and Valid:
+                                db.insertNewItem(item_Name, item_desc, item_price, item_category, room_id, image_data, itemQuality,subcategory)
+                                st.success(f"{item_Name} has been added to database")
+                                time.sleep(2.0)
+                                st.rerun()
+
+                            time.sleep(3.0)
                             st.rerun()
-
-                        time.sleep(3.0)
-                        st.rerun()
 
                 with st.expander("🏢 Add a new room location"):
                     with st.form("Add new room to database"):
@@ -426,7 +502,6 @@ try:
                     categories=[cat[0] for cat in reterive_categories_as_datafrfame().values]
                     category_to_add_new_fiter=st.selectbox("Please select a category that you want to add new filter ",[""]+categories)
                     if category_to_add_new_fiter:
-
                         item_tags=db.get_category_tags(category_to_add_new_fiter)
                         
 
@@ -520,7 +595,7 @@ try:
                                     st.rerun()
 
                                 if category_submit_valid:
-                                    print(db.insert_new_category(category_name))
+                                    db.insert_new_category(category_name)
                                     st.success(f"✅ {category_name} has been successfully added to the database")
                                     time.sleep(1.5)
                                     st.rerun()
@@ -537,6 +612,16 @@ try:
 
 
 
+
+            with st.expander("Add or Delete subcategories"):
+                delete_subcat=st.toggle("Delete subcategory")
+
+                if delete_subcat:
+                    st.write("TEST")
+
+                else:
+                    display_subCategory(current_category)
+                    delete_or_remove_sub_cat('add')
 
 
             with st.expander("Clear Table info"):
