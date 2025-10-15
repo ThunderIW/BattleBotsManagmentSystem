@@ -13,6 +13,10 @@ from pathlib import Path
 from encrypt_file import encryptAndDecrypt
 import streamlit_shadcn_ui as ui
 
+def convert_to_string(removed_items:list):
+    display_string=",".join(removed_items)
+    return display_string
+
 
 def delete_or_remove_sub_cat(type='add'):
     if type=='add':
@@ -569,9 +573,9 @@ try:
 
                                 if valid_remove_category_flag:
                                     for c in categories:
-                                        print(c)
                                         db.remove_category_from_database(c)
-                                    st.success(f"✅ {category_to_remove} has been successfully removed")
+                                    display_text=convert_to_string(category_to_remove)
+                                    st.success(f"✅ {display_text} has been successfully removed")
         
                                 time.sleep(1.5)
                                 st.rerun()
