@@ -1,8 +1,12 @@
+import orjson
 import streamlit as st
 from streamlit_calendar import calendar
 import pendulum
+import database_backend as db
 
 #st.set_page_config(layout="wide")
+
+
 st.header('Club Schedule')
 
 calendar_options = {
@@ -20,6 +24,11 @@ calendar_options = {
     "initialView": "dayGridMonth",
 }
 
+calendar_events=db.get_events()
+
+
+
+"""
 calendar_events = [
     {
         "title": "kickOff event",
@@ -52,6 +61,7 @@ calendar_events = [
 
 
 ]
+"""
 
 custom_css = """
     .fc-event-past {
@@ -106,6 +116,7 @@ if calendar_result.get("eventClick"):
     title=calendar_result['eventClick']['event']['title']
     start=calendar_result['eventClick']['event']['start']
     end=calendar_result['eventClick']['event']['end']
+    event_description=calendar_result['eventClick']['event']['extendedProps'].get('description')
 
     startDate=pendulum.parse(start).date()
     EndDate=pendulum.parse(end).date()
@@ -117,4 +128,4 @@ if calendar_result.get("eventClick"):
         st.write(f"You clicked on: {title}{startDate} - {EndDate}")
     st.write(f"**Start time**: {startTime}")
     st.write(f"**End time**: {endTime}")
-    st.write("TEST message")
+    st.write(event_description)

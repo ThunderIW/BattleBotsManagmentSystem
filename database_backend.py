@@ -1,6 +1,6 @@
 import sqlite3
 import polars as pl
-import json
+import orjson
 
 def create_Database_connect():
     conn=sqlite3.connect('BattleBots.db')
@@ -54,6 +54,43 @@ def remove_category_from_database(category_name):
         conn.close()
     except sqlite3.Error as e:
         return f"Error removing tags from database: {e}"
+
+
+
+def get_events():
+    try:
+
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute("""
+        SELECT * FROM Events""")
+        events = cursor.fetchall()
+        conn.close()
+       # return events
+        event_list=[orjson.loads(event[1]) for event in events]
+        return event_list
+    except sqlite3.Error as e:
+        return f"Error retrieving events from database: {e}"
+
+def insert_new_events(event):
+    try:
+        blob = orjson.dumps(event)
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute("""
+        INSERT INTO Events (event_data) VALUES (?)
+        """,(sqlite3.Binary(blob),))
+        conn.commit()
+        conn.close()
+    except sqlite3.Error as e:
+        return f"Error adding events to database: {e}"
+
+
+
+
+    except sqlite3.Error as e:
+        return f"Error retrieving events from database: {e}"
+
 
 
 def insert_new_filter_tag(new_List:str,category):
@@ -344,3 +381,4 @@ def get_item_details(item_name):
 
 
 
+get_events()

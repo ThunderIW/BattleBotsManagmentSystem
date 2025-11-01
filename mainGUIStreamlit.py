@@ -11,6 +11,7 @@ import polars as pl
 import pandas as pd
 from pathlib import Path
 from encrypt_file import encryptAndDecrypt
+import pendulum
 import streamlit_shadcn_ui as ui
 
 
@@ -410,6 +411,36 @@ try:
                         st.success(f"{csv_file.name} has been successfully uploaded")
                         time.sleep(0.5)
                         st.rerun()
+
+            with st.expander("Add new events"):
+                current_date=pendulum.now()
+                formatted_date = current_date.format("YYYY-MM-DD")
+                formatted_time = current_date.format("hh:mm:ss A")
+                #print(formatted_date,formatted_time)
+                st.subheader("Add new events")
+                with st.form("Add new events"):
+                    event_name=st.text_input("Enter the event name")
+                    date_of_event=st.date_input("select the day of the event",min_value=current_date)
+                    start_time=st.time_input("Please select when the event begins")
+                    end_time=st.time_input("Please select when the event ends")
+                    event_desc=st.text_area("Please enter a description of the event")
+                    if st.form_submit_button("Add event"):
+                        print(date_of_event)
+                        start=f"{date_of_event}T{start_time}"
+                        end=f"{date_of_event}T{end_time}"
+                        event_info={
+                            "title":event_name,
+                            "start":start,
+                            "end":end,
+                            "extendedProps": {
+                                "description": event_desc
+                            }
+                        }
+                        db.insert_new_events(event_info)
+
+
+
+
             with st.expander("Add new Category or item filter tags"):
                 item_filter_toggle=st.toggle("Add item filter tags")
 
@@ -481,10 +512,6 @@ try:
                                     db.remove_category_from_database(category_to_remove)
                                 time.sleep(1.5)
                                 st.rerun()
-
-
-
-
 
 
                     else:
