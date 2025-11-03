@@ -113,19 +113,20 @@ calendar_result = calendar(
 
 
 if calendar_result.get("eventClick"):
-    title=calendar_result['eventClick']['event']['title']
-    start=calendar_result['eventClick']['event']['start']
-    end=calendar_result['eventClick']['event']['end']
-    event_description=calendar_result['eventClick']['event']['extendedProps'].get('description')
+    with st.container(border=True):
+        title=calendar_result['eventClick']['event']['title']
+        start=calendar_result['eventClick']['event']['start']
+        end=calendar_result['eventClick']['event']['end']
+        event_description=calendar_result['eventClick']['event']['extendedProps'].get('description')
 
-    startDate=pendulum.parse(start).date()
-    EndDate=pendulum.parse(end).date()
-    startTime=pendulum.parse(start).format("hh:mm A")
-    endTime=pendulum.parse(end).format("hh:mm A")
-    if startDate==EndDate:
-        st.write(f"You clicked on: {title}")
-    else:
-        st.write(f"You clicked on: {title}{startDate} - {EndDate}")
-    st.write(f"**Start time**: {startTime}")
-    st.write(f"**End time**: {endTime}")
-    st.write(event_description)
+        startDate=pendulum.parse(start).date()
+        EndDate=pendulum.parse(end).date()
+        startTime=pendulum.parse(start).format("hh:mm A")
+        endTime=pendulum.parse(end).format("hh:mm A")
+        if startDate==EndDate:
+            st.write(f"You clicked on: {title}")
+        else:
+            st.write(f"You clicked on: {title}{startDate} - {EndDate}")
+        st.write(f"- **Start time**: {startTime}")
+        st.write(f"- **End time**: {endTime}")
+        st.write(f"- **Event Details**: {event_description}")

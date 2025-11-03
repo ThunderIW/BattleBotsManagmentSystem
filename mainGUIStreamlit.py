@@ -350,7 +350,7 @@ try:
                     st.success()
                     st.rerun()
 
-        with tab4:
+        with ((tab4)):
 
             tables = db.get_table_in_database()
             st.subheader("Admin Page")
@@ -413,30 +413,101 @@ try:
                         st.rerun()
 
             with st.expander("Add new events"):
-                current_date=pendulum.now()
-                formatted_date = current_date.format("YYYY-MM-DD")
-                formatted_time = current_date.format("hh:mm:ss A")
-                #print(formatted_date,formatted_time)
-                st.subheader("Add new events")
-                with st.form("Add new events"):
-                    event_name=st.text_input("Enter the event name")
-                    date_of_event=st.date_input("select the day of the event",min_value=current_date)
-                    start_time=st.time_input("Please select when the event begins")
-                    end_time=st.time_input("Please select when the event ends")
-                    event_desc=st.text_area("Please enter a description of the event")
-                    if st.form_submit_button("Add event"):
-                        print(date_of_event)
-                        start=f"{date_of_event}T{start_time}"
-                        end=f"{date_of_event}T{end_time}"
-                        event_info={
-                            "title":event_name,
+                remove_event=st.toggle("remove Event")
+
+
+                with st.container(border=True):
+                    for event in db.get_events():
+                        start_time = pendulum.parse(event.get('start')).time().format("hh:mm:ss A")
+                        start_time_date = pendulum.parse(event.get('start')).date().format("YYYY-MM-DD")
+
+                        end_time = pendulum.parse(event.get('end')).time().format("hh:mm:ss A")
+                        end_time_date = pendulum.parse(event.get('end')).date().format("YYYY-MM-DD")
+
+                        if end_time_date==start_time_date:
+                            date_of_event= pendulum.parse(start_time_date).to_formatted_date_string()
+
+                        event_title = event.get("title")
+
+                        with st.expander(f"{event_title}"):
+                            st.write(f"Event of date: {date_of_event}")
+                            st.write(f"Start of event: {start_time}")
+                            st.write(f"finish time of event: {end_time}")
+
+                if remove_event:
+                    st.write("please select which event you want to remove")
+                    events=db.get_events()
+                    data = [event.get('title') for event in events]
+                    with st.form(key="remove_event"):
+                        selections=st.multiselect("Select events",data)
+                        remove_event_button=st.form_submit_button("Remove event",type="primary")
+                    if remove_event_button:
+                        for selection in selections:
+                            print(db.remove_event(selection))
+                        st.success(f"{selections} has been removed")
+                        time.sleep(1.5)
+                        st.rerun()
+
+
+
+
+                else:
+                    current_date=pendulum.now()
+                    #formatted_date = current_date.format("YYYY-MM-DD")
+                    #formatted_time = current_date.format("hh:mm:ss A")
+                    st.subheader("Add new events")
+
+                    reoccurring_event=st.toggle("Reoccurring event")
+                    days_of_week={"Monday":1, "Tuesday":2, "Wednesday":3, "Thursday":4, "Friday":5, "Saturday":6, "Sunday":0}
+
+                    if reoccurring_event:
+                        st.write("TEST")
+                        with st.form("Add new event"):
+                            event_name = st.text_input("Enter the event name")
+                            occurring_of_event=st.multiselect("Please select when this event occurs",list(days_of_week.keys()) )
+
+                            date_of_event_start_date = st.date_input("select the day of the event",key="R-sd")
+                            date_of_event_end_date = st.date_input("select the day of the event",key="R-ed")
+
+                            start_time = st.time_input("Please select when the event begins **(24hr format)**",
+                                                       value="09:00")
+                            end_time = st.time_input("Please select when the event ends **(24hr format)**",
+                                                     value="10:00")
+
+                            reoccurring_event_button=st.form_submit_button("Reoccurring event",key="reoccurring_event")
+                        if reoccurring_event_button:
+                            #print(occurring_of_event)
+                            days_of_events=[days_of_week.get(day) for day in occurring_of_event]
+                            print(days_of_events)
+
+
+
+                    else:
+
+
+                        with st.form("Add new events"):
+                            event_name=st.text_input("Enter the event name")
+                            date_of_event=st.date_input("select the day of the event",min_value=current_date)
+                            start_time=st.time_input("Please select when the event begins **(24hr format)**",value="09:00")
+                            end_time=st.time_input("Please select when the event ends **(24hr format)**",value="10:00")
+                            event_desc=st.text_area("Please enter a description of the event")
+                            if st.form_submit_button("Add event"):
+
+                                start=f"{date_of_event}T{start_time}"
+                                end=f"{date_of_event}T{end_time}"
+                                event_info={
+                                "title":event_name,
                             "start":start,
                             "end":end,
                             "extendedProps": {
                                 "description": event_desc
                             }
                         }
-                        db.insert_new_events(event_info)
+                                db.insert_new_events(event_info)
+                                st.success("New events added to database")
+                                time.sleep(1.5)
+                                st.rerun()
+
 
 
 

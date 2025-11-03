@@ -56,6 +56,19 @@ def remove_category_from_database(category_name):
         return f"Error removing tags from database: {e}"
 
 
+def remove_event(event_to_remove):
+    print(event_to_remove)
+    try:
+        conn=create_Database_connect()
+        cursor=conn.cursor()
+        cursor.execute("""
+        DELETE FROM Events
+        WHERE json_extract(event_data, '$.title') = ?
+        """,(event_to_remove,))
+        conn.commit()
+        conn.close()
+    except sqlite3.Error as e:
+        return f"Error removing event from database: {e}"
 
 def get_events():
     try:
