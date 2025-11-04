@@ -507,7 +507,8 @@ try:
                     if remove_event_button:
                         for selection in selections:
                             print(db.remove_event(selection))
-                        st.success(f"{selections} has been removed")
+
+                        st.success(f"{', '.join(selections)} has been removed")
                         time.sleep(1.5)
                         st.rerun()
 
@@ -541,8 +542,6 @@ try:
 
                             reoccurring_event_button=st.form_submit_button("Reoccurring event",key="reoccurring_event",type="primary")
                         if reoccurring_event_button:
-                            print(date_of_event_start_date)
-                            print(date_of_event_end_date)
                             days_of_events=[days_of_week.get(day) for day in occurring_of_event]
                             reoccurring_event_json={
                                 "title": event_name,

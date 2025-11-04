@@ -1,5 +1,6 @@
 import orjson
 import streamlit as st
+from networkx.algorithms.operators.binary import difference
 from streamlit_calendar import calendar
 import pendulum
 import database_backend as db
@@ -26,42 +27,6 @@ calendar_options = {
 
 calendar_events=db.get_events()
 
-
-
-"""
-calendar_events = [
-    {
-        "title": "kickOff event",
-        "start": "2025-10-31T08:30:00",
-        "end": "2025-10-31T10:30:00",
-        "className": ["kickoff-event"]
-    },
-    {
-        "title": "Weekly meeting 2",
-        "daysOfWeek":[6],
-        'startTime':"18:00",
-        'endTime': '19:30',
-        'startRecur':"2025-10-11",
-        "endRecur": "2025-12-31",
-        "className": ["meeting-event"]
-
-
-
-    },
-    {
-        "title": "Weekly meeting 1",
-        "daysOfWeek": [4],
-        'startTime': "18:00",
-        'endTime': '19:30',
-        'startRecur': "2025-10-16",
-        "endRecur": "2025-12-31",
-        "className": ["meeting-event"]
-
-    },
-
-
-]
-"""
 
 custom_css = """
     .fc-event-past {
@@ -121,13 +86,13 @@ if calendar_result.get("eventClick"):
 
         startDate=pendulum.parse(start).date()
         EndDate=pendulum.parse(end).date()
-        startTime=pendulum.parse(start).format("hh:mm A")
-        endTime=pendulum.parse(end).format("hh:mm A")
+        startTime=pendulum.parse(start).time()
+        endTime=pendulum.parse(end).time()
         if startDate==EndDate:
             st.write(f"You clicked on: {title}")
         else:
             st.write(f"You clicked on: {title}{startDate} - {EndDate}")
-        st.write(f"- **Start time**: {startTime}")
-        st.write(f"- **End time**: {endTime}")
+        difference=endTime-startTime
+        st.write(f"- **Duration**: {startTime.format('hh:mm A')} - {endTime.format('hh:mm A')} (**{difference.in_words()}**)")
         st.write(f"- **Event Details**: {event_description}")
 st.page_link(page="MainGUIStreamlit.py",label="Click here to add more events",icon=":material/calendar_add_on:")
