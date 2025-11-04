@@ -130,3 +130,4 @@ if calendar_result.get("eventClick"):
         st.write(f"- **Start time**: {startTime}")
         st.write(f"- **End time**: {endTime}")
         st.write(f"- **Event Details**: {event_description}")
+st.page_link(page="MainGUIStreamlit.py",label="Click here to add more events",icon=":material/calendar_add_on:")

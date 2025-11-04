@@ -3,6 +3,7 @@ import sqlite3
 import streamlit as st
 import streamlit_authenticator  as stauth
 import yaml
+from sspilib.raw import decrypt_message
 from yaml.loader import SafeLoader
 from streamlit_searchbox import st_searchbox
 import database_backend as db
@@ -13,6 +14,81 @@ from pathlib import Path
 from encrypt_file import encryptAndDecrypt
 import pendulum
 import streamlit_shadcn_ui as ui
+
+days_of_week = {"Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6, "Sunday": 0}
+
+
+def display_events():
+    event_data=db.get_events()
+    for event in event_data:
+        if "startRecur" in event:
+            event_title=event.get("title")
+            daysOfWeek=event.get("daysOfWeek")
+
+            start_time=pendulum.parse(event.get("startTime")).format("hh:mm A")
+            end_time=pendulum.parse(event.get("endTime")).format("hh:mm A")
+            startOfRecur=pendulum.parse(event.get("startRecur")).to_formatted_date_string()
+            endOfRecur=pendulum.parse(event.get("endRecur")).to_formatted_date_string()
+            event_description_rec=event.get("extendedProps").get("description")
+
+            with st.expander(event_title,expanded=True):
+
+                daysOfTheWeekThatEventOccursOn=[]
+                for key,value in days_of_week.items():
+                    for day in daysOfWeek:
+                        if day==value:
+                            daysOfTheWeekThatEventOccursOn.append(key)
+
+                message=", ".join(daysOfTheWeekThatEventOccursOn)
+
+                multi_for_recurring_event=f"""
+                **Event details**
+                
+                **Event title**: {event_title}
+                
+                
+                - :watch: Time: {start_time} - {end_time}
+                - :date: Duration :  {startOfRecur} - {endOfRecur}
+                - Days : {message}
+                 - Description:
+                 
+                    {event_description_rec}
+                 
+                    
+                               
+                             
+                
+                
+                """
+                st.markdown(multi_for_recurring_event)
+
+
+        else:
+            event_title = event.get("title")
+            start_time=pendulum.parse(event.get("start")).time().format("hh:mm A")
+            end_time=pendulum.parse(event.get("end")).time().format("hh:mm A")
+            day=pendulum.parse(event.get("start")).format("dddd")
+            date_of_event=pendulum.parse(event.get("start")).date().to_formatted_date_string()
+            descrption=event.get("extendedProps").get("description")
+
+            with st.expander(event_title,expanded=True):
+                multi_for_normal_event = f"""
+                              **Event details**
+
+                              Event title: {event_title}
+
+                              - :watch: Time: {start_time} - {end_time}
+                              - :date: {day} {date_of_event}
+                              - Description:
+                               
+                                {descrption}
+                              
+
+                              """
+                st.markdown(multi_for_normal_event)
+
+
+
 
 
 
@@ -412,28 +488,15 @@ try:
                         time.sleep(0.5)
                         st.rerun()
 
-            with st.expander("Add new events"):
-                remove_event=st.toggle("remove Event")
+            with st.expander(":material/calendar_add_on: Add new events "):
+
 
 
                 with st.container(border=True):
-                    for event in db.get_events():
-                        start_time = pendulum.parse(event.get('start')).time().format("hh:mm:ss A")
-                        start_time_date = pendulum.parse(event.get('start')).date().format("YYYY-MM-DD")
+                    display_events()
 
-                        end_time = pendulum.parse(event.get('end')).time().format("hh:mm:ss A")
-                        end_time_date = pendulum.parse(event.get('end')).date().format("YYYY-MM-DD")
 
-                        if end_time_date==start_time_date:
-                            date_of_event= pendulum.parse(start_time_date).to_formatted_date_string()
-
-                        event_title = event.get("title")
-
-                        with st.expander(f"{event_title}"):
-                            st.write(f"Event of date: {date_of_event}")
-                            st.write(f"Start of event: {start_time}")
-                            st.write(f"finish time of event: {end_time}")
-
+                remove_event = st.toggle("remove Event")
                 if remove_event:
                     st.write("please select which event you want to remove")
                     events=db.get_events()
@@ -458,13 +521,13 @@ try:
                     st.subheader("Add new events")
 
                     reoccurring_event=st.toggle("Reoccurring event")
-                    days_of_week={"Monday":1, "Tuesday":2, "Wednesday":3, "Thursday":4, "Friday":5, "Saturday":6, "Sunday":0}
+
 
                     if reoccurring_event:
-                        st.write("TEST")
-                        with st.form("Add new event"):
+
+                        with st.form("Add new reoccurring event",clear_on_submit=True):
                             event_name = st.text_input("Enter the event name")
-                            occurring_of_event=st.multiselect("Please select when this event occurs",list(days_of_week.keys()) )
+                            occurring_of_event=st.multiselect("Please select days of the week when this event occurs",list(days_of_week.keys()) )
 
                             date_of_event_start_date = st.date_input("select the day of the event",key="R-sd")
                             date_of_event_end_date = st.date_input("select the day of the event",key="R-ed")
@@ -474,18 +537,36 @@ try:
                             end_time = st.time_input("Please select when the event ends **(24hr format)**",
                                                      value="10:00")
 
-                            reoccurring_event_button=st.form_submit_button("Reoccurring event",key="reoccurring_event")
+                            event_desc_rec = st.text_area("Please enter a description of the event")
+
+                            reoccurring_event_button=st.form_submit_button("Reoccurring event",key="reoccurring_event",type="primary")
                         if reoccurring_event_button:
-                            #print(occurring_of_event)
+                            print(date_of_event_start_date)
+                            print(date_of_event_end_date)
                             days_of_events=[days_of_week.get(day) for day in occurring_of_event]
-                            print(days_of_events)
+                            reoccurring_event_json={
+                                "title": event_name,
+                                "daysOfWeek": days_of_events,
+                                'startTime': start_time,
+                                'endTime':end_time ,
+                                'startRecur': date_of_event_start_date,
+                                "endRecur": date_of_event_end_date,
+                                "extendedProps": {
+                                    "description": event_desc_rec
+                                }
+                            }
+                            db.insert_new_events(reoccurring_event_json)
+                            st.success("New events added to database")
+                            time.sleep(1.5)
+                            st.rerun()
+
 
 
 
                     else:
 
 
-                        with st.form("Add new events"):
+                        with st.form("Add new events",clear_on_submit=True):
                             event_name=st.text_input("Enter the event name")
                             date_of_event=st.date_input("select the day of the event",min_value=current_date)
                             start_time=st.time_input("Please select when the event begins **(24hr format)**",value="09:00")
