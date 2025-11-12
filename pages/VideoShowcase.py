@@ -1,4 +1,9 @@
+import os
+import shutil
+
 import streamlit as st
+from googledriver import download_folder
+from pathlib import Path
 
 
 
@@ -9,9 +14,50 @@ st.header("A collection of videos demonstrating battlebots in action")
 st.subheader("Battlebots in Action")
 
 
+def get_videos():
+    shutil.rmtree("videos")
+    os.mkdir("videos")
+    url="https://drive.google.com/drive/folders/19TbxZzjPXCdcKN0xqeAwcpheUwLP9ghg?usp=drive_link"
+    download_folder(url,save_path="videos")
+
+
+def clean_folders():
+    root=Path(__file__).resolve().parent.parent
+    video_path=root.joinpath("videos")
+    if len(list(video_path.iterdir()))>0:
+        for folder in video_path.iterdir():
+            if folder.is_dir():
+                for num,file in enumerate(folder.iterdir()):
+                    if file.suffix==".jpg" or file.suffix==".HEIC" or file.suffix==".JPG":
+                        print("HIT")
+                        file.unlink()
+                for num, file_2 in enumerate(folder.iterdir()):
+                        new_path=video_path /folder/ f"movie_{num+1}{file_2.suffix}"
+                        print("new_path:",new_path)
+                        file_2.rename(new_path)
+
+        return "Success"
+    else:
+        return "Empty folder"
 
 
 video_choice=st.selectbox("Select a video to watch", options=["","Kilobots 57"])
+
+get_latest_video_button=st.button("Get latest video")
+if get_latest_video_button:
+    with st.spinner("Getting latest video",show_time=True):
+        get_videos()
+
+    message=clean_folders()
+    if message=='Empty folder':
+        st.warning("Empty folder")
+    if message=="Success":
+        st.success("Success")
+
+
+
+
+
 
 if video_choice=="Kilobots 57":
     st.write(

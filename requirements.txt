@@ -7,4 +7,5 @@ streamlit_authenticator==0.4.2
 streamlit_searchbox==0.1.22
 streamlit_shadcn_ui
 python-dotenv
+googledriver
 
