@@ -3,7 +3,6 @@ import sqlite3
 import streamlit as st
 import streamlit_authenticator  as stauth
 import yaml
-from sspilib.raw import decrypt_message
 from yaml.loader import SafeLoader
 from streamlit_searchbox import st_searchbox
 import database_backend as db
@@ -11,81 +10,121 @@ import time
 import polars as pl
 import pandas as pd
 from pathlib import Path
-from encrypt_file import encryptAndDecrypt
 import pendulum
 import streamlit_shadcn_ui as ui
+from dataclasses import dataclass, field
+from typing import Optional
 
-days_of_week = {"Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6, "Sunday": 0}
+week_days = {0: "Sunday", 1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday"}
+
+@dataclass
+class Event:
+    date_of_event: Optional[str]= None
+    event_title:Optional[str] = None
+    daysOfWeek: Optional[list] = None
+    start_time:Optional[str] = None
+    end_time:Optional[str] = None
+    startRecur:Optional[str] = None
+    endRecur:Optional[str] = None
+    eventDescription:str = None
+
+@dataclass
+class CalendarEvent:
+    events:list  = field(default_factory=list)
+
+    def add_event(self,event:Event):
+        self.events.append(event)
 
 
 def display_events():
     event_data=db.get_events()
+    calendar=CalendarEvent()
+
     for event in event_data:
-        if "startRecur" in event:
-            event_title=event.get("title")
-            daysOfWeek=event.get("daysOfWeek")
+        if 'startRecur' in event:
+            event_info=Event(
+                date_of_event=pendulum.parse(event.get("startTime")).to_date_string(),
+                event_title=event.get("title"),
+                daysOfWeek=event.get("daysOfWeek"),
+                start_time=pendulum.parse(event.get("startTime")).format("hh:mm A"),
+                end_time=pendulum.parse(event.get("endTime")).format("hh:mm A"),
+                startRecur=pendulum.parse(event.get("startRecur")).to_formatted_date_string(),
+                endRecur=pendulum.parse(event.get("endRecur")).to_formatted_date_string(),
+                eventDescription = event.get("extendedProps").get("description")
 
-            start_time=pendulum.parse(event.get("startTime")).format("hh:mm A")
-            end_time=pendulum.parse(event.get("endTime")).format("hh:mm A")
-            startOfRecur=pendulum.parse(event.get("startRecur")).to_formatted_date_string()
-            endOfRecur=pendulum.parse(event.get("endRecur")).to_formatted_date_string()
-            event_description_rec=event.get("extendedProps").get("description")
-
-            with st.expander(event_title,expanded=True):
-
-                daysOfTheWeekThatEventOccursOn=[]
-                for key,value in days_of_week.items():
-                    for day in daysOfWeek:
-                        if day==value:
-                            daysOfTheWeekThatEventOccursOn.append(key)
-
-                message=", ".join(daysOfTheWeekThatEventOccursOn)
-
-                multi_for_recurring_event=f"""
-                **Event details**
-                
-                **Event title**: {event_title}
-                
-                
-                - :watch: Time: {start_time} - {end_time}
-                - :date: Duration :  {startOfRecur} - {endOfRecur}
-                - Days : {message}
-                 - Description:
-                 
-                    {event_description_rec}
-                 
-                    
-                               
-                             
-                
-                
-                """
-                st.markdown(multi_for_recurring_event)
+            )
+            calendar.add_event(event_info)
 
 
         else:
-            event_title = event.get("title")
-            start_time=pendulum.parse(event.get("start")).time().format("hh:mm A")
-            end_time=pendulum.parse(event.get("end")).time().format("hh:mm A")
-            day=pendulum.parse(event.get("start")).format("dddd")
-            date_of_event=pendulum.parse(event.get("start")).date().to_formatted_date_string()
-            descrption=event.get("extendedProps").get("description")
+            event_info=Event(
+                event_title=event.get("title"),
+                date_of_event=pendulum.parse(event.get("start")).to_date_string(),
+                start_time=pendulum.parse(event.get("start")).time().format("hh:mm A"),
+                end_time=pendulum.parse(event.get("end")).time().format("hh:mm A"),
+                eventDescription = event.get("extendedProps").get("description"),
+                daysOfWeek=[pendulum.parse(event.get("start")).format("dddd")]
 
-            with st.expander(event_title,expanded=True):
-                multi_for_normal_event = f"""
-                              **Event details**
 
-                              Event title: {event_title}
+            )
+            calendar.add_event(event_info)
 
-                              - :watch: Time: {start_time} - {end_time}
-                              - :date: {day} {date_of_event}
-                              - Description:
-                               
-                                {descrption}
-                              
 
-                              """
-                st.markdown(multi_for_normal_event)
+    print(calendar.events)
+    for event in calendar.events:
+        with (st.expander(event.event_title,expanded=True)):
+            if event.startRecur is None and event.endRecur is None:
+                st.markdown(f"""
+                    **Event Info:**
+                    
+                    
+                     **Event title**: {event.event_title}
+                    - :watch: Time: {event.start_time} - {event.end_time}
+                    - :date: {event.daysOfWeek[0]} {event.date_of_event}
+                    
+                    
+                    {event.eventDescription}
+                
+                """)
+
+            else:
+
+                days=', '.join([week_days[day] for day in event.daysOfWeek])
+                st.markdown(f"""
+                **Event Info:**
+                
+                **Event title**: {event.event_title}
+                - :watch: Time: {event.start_time} - {event.end_time}
+                - :date: {days} {event.date_of_event}
+                
+                
+                {event.eventDescription}
+                
+
+                """)
+
+
+    '''
+               with st.expander(event_title,expanded=True):
+                   multi_for_normal_event = f"""
+                                 **Event details**
+
+                                 Event title: {event_title}
+
+                                 - :watch: Time: {start_time} - {end_time}
+                                 - :date: {day} {date_of_event}
+                                 - Description:
+
+                                   {descrption}
+
+
+                                 """
+                   st.markdown(multi_for_normal_event)
+       return len(event_data)
+       '''
+
+
+
 
 
 
@@ -170,10 +209,8 @@ def display_items(category_items,chosen_category,selected_tags):
 
 
 
-d=encryptAndDecrypt()
-login_file=d.decrypt()
-#with open(login_file, "r") as file:
-config = yaml.load(login_file, Loader=SafeLoader)
+with open('config.yaml', 'r') as file:
+    config = yaml.load(file, Loader=SafeLoader)
 stauth.Hasher.hash_passwords(config['credentials'])
 
 authenticator = stauth.Authenticate(
@@ -257,7 +294,7 @@ try:
 
 
 
-                   
+
             else:
                 st.subheader("View Items")
                 selected_item=st_searchbox(returnItemNames,placeholder="Search for an item",key="LookupItem")
@@ -426,7 +463,7 @@ try:
                     st.success()
                     st.rerun()
 
-        with ((tab4)):
+        with tab4:
 
             tables = db.get_table_in_database()
             st.subheader("Admin Page")
@@ -489,11 +526,8 @@ try:
                         st.rerun()
 
             with st.expander(":material/calendar_add_on: Add new events "):
+                display_events()
 
-
-
-                with st.container(border=True):
-                    display_events()
 
 
                 remove_event = st.toggle("remove Event")
