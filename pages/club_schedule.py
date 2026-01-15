@@ -1,6 +1,5 @@
 import orjson
 import streamlit as st
-from networkx.algorithms.operators.binary import difference
 from streamlit_calendar import calendar
 import pendulum
 import database_backend as db
@@ -95,4 +94,5 @@ if calendar_result.get("eventClick"):
         difference=endTime-startTime
         st.write(f"- **Duration**: {startTime.format('hh:mm A')} - {endTime.format('hh:mm A')} (**{difference.in_words()}**)")
         st.write(f"- **Event Details**: {event_description}")
-st.page_link(page="MainGUIStreamlit.py",label="Click here to add more events",icon=":material/calendar_add_on:")
+
+
