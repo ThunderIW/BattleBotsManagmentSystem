@@ -616,6 +616,15 @@ try:
 
 
 
+            with st.expander("Add Club Members",expanded=True):
+                with st.form("Add Club Members",clear_on_submit=True):
+                    name=st.text_input("Please enter the Club Member name")
+                    submitted_name=st.form_submit_button("Add Club Members",type="primary")
+                    if submitted_name:
+                        db.add_members(name)
+
+
+
 
             with st.expander("Add or Delete subcategories"):
                 delete_subcat=st.toggle("Delete subcategory")
