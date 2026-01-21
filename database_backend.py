@@ -462,3 +462,32 @@ def get_item_details(item_name):
 
 
 
+def get_Ranks():
+    conn=create_Database_connect()
+    cursor=conn.cursor()
+    cursor.execute("""
+    SELECT RANK_Name FROM Ranks
+    """)
+    ranks=cursor.fetchall()
+    conn.close()
+    return ranks
+
+def add_members(MemberName):
+    try:
+        conn = create_Database_connect()
+        conn.execute('PRAGMA foreign_keys = ON')
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO Members(Name) VALUES(?)
+        """, (MemberName,))
+        conn.commit()
+        print(f"Added member: {MemberName}")
+        return True
+    except sqlite3.IntegrityError as e:
+        print(f"Integrity error: {e}")
+        return False
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return False
+    finally:
+        conn.close()
