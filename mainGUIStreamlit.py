@@ -617,11 +617,39 @@ try:
 
 
             with st.expander("Add Club Members",expanded=True):
-                with st.form("Add Club Members",clear_on_submit=True):
-                    name=st.text_input("Please enter the Club Member name")
-                    submitted_name=st.form_submit_button("Add Club Members",type="primary")
-                    if submitted_name:
-                        db.add_members(name)
+                ok,current_members=db.return_club_members()
+                if ok and len(current_members)>0:
+                    st.subheader("Club Members")
+                    st.data_editor(current_members,
+                                   column_config={'ID': None},
+                                   hide_index=True)
+                Remove_Members_toggle=st.toggle("Remove Members")
+                if len(current_members)==0:
+                    st.warning("No members found in the database please add one")
+                if Remove_Members_toggle and len(current_members)>0 :
+                    with st.form("Remove Members",clear_on_submit=True):
+                        members_to_remove=st.multiselect("Please select a member to remove",[""]+current_members['Name'])
+                        remove_members_button=st.form_submit_button("Remove Members",type="primary")
+                        if remove_members_button:
+                            for name in members_to_remove:
+                                Member_ID=int(current_members.loc[current_members['Name']==name,'ID'].iloc[0])
+                                db.remove_member(Member_ID)
+                                st.success(f"Removed {name} from the database")
+                                time.sleep(1.5)
+
+                            st.rerun()
+
+
+
+                else:
+                    with st.form("Add Club Members",clear_on_submit=True):
+                        name=st.text_input("Please enter the Club Member name")
+                        submitted_name=st.form_submit_button("Add Club Members",type="primary")
+                        if submitted_name:
+                            db.add_members(name)
+                            st.success(f"{name} has been successfully added to the database")
+                            time.sleep(1.5)
+                            st.rerun()
 
 
 
