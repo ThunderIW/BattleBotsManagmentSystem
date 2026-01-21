@@ -1,6 +1,8 @@
 import sqlite3
 import polars as pl
 import json
+from dataclasses import dataclass,asdict
+from typing import Optional
 
 
 
@@ -482,6 +484,57 @@ def add_members(MemberName):
         """, (MemberName,))
         conn.commit()
         print(f"Added member: {MemberName}")
+        return True
+    except sqlite3.IntegrityError as e:
+        print(f"Integrity error: {e}")
+        return False
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+
+
+@dataclass
+class Member:
+    ID: Optional[int] = None
+    Name: Optional[str] = None
+
+
+
+
+def return_club_members():
+    try:
+        conn = create_Database_connect()
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT ID,Name FROM Members
+        
+        """)
+        members=pl.DataFrame([asdict(Member(ID=member[0],Name=member[1])) for member in cursor.fetchall()])
+        return True,members.to_pandas()
+    except sqlite3.IntegrityError as e:
+        print(f"Integrity error: {e}")
+        return False
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+def remove_member(Member_ID):
+    try:
+        conn = create_Database_connect()
+        cursor = conn.cursor()
+        cursor.execute("""
+        DELETE FROM Members
+        WHERE ID=?
+
+                       """,(Member_ID,))
+        conn.commit()
         return True
     except sqlite3.IntegrityError as e:
         print(f"Integrity error: {e}")
