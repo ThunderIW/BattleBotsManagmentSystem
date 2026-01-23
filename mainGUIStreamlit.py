@@ -628,7 +628,7 @@ try:
                     st.warning("No members found in the database please add one")
                 if Remove_Members_toggle and len(current_members)>0 :
                     with st.form("Remove Members",clear_on_submit=True):
-                        members_to_remove=st.multiselect("Please select a member to remove",[""]+current_members['Name'])
+                        members_to_remove=st.multiselect("Please select a member to remove",[""]+current_members['Name'],placeholder="Please select a member to remove")
                         remove_members_button=st.form_submit_button("Remove Members",type="primary",icon=":material/delete:")
                         if remove_members_button:
                             for name in members_to_remove:
@@ -643,10 +643,13 @@ try:
 
                 else:
                     with st.form("Add Club Members",clear_on_submit=True):
+                        ranks=[rank.Name for rank in db.get_ranks()]
                         name=st.text_input("Please enter the Club Member name")
+                        rank=st.selectbox("Please select a rank",options=ranks)
                         submitted_name=st.form_submit_button("Add Club Members",type="primary",icon=":material/add:")
                         if submitted_name:
-                            db.add_members(name)
+                            selected_rank_ID=int(ranks.index(rank)+1)
+                            db.add_members(name,rank_id=selected_rank_ID)
                             st.success(f"{name} has been successfully added to the database")
                             time.sleep(1.5)
                             st.rerun()
