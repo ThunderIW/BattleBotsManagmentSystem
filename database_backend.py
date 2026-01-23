@@ -539,6 +539,38 @@ def return_club_members():
         conn.close()
 
 
+def update_Members_ranks(MemberName,new_rank):
+    try:
+        conn = create_Database_connect()
+        cursor = conn.cursor()
+
+
+        cursor.execute("""
+        SELECT ID FROM Ranks
+        WHERE RANK_NAME= ?
+        """,(new_rank,))
+        new_rank_id=cursor.fetchone()[0]
+
+
+        cursor.execute("""
+        SELECT ID FROM Members WHERE Name = ?
+        """,(MemberName,))
+        MemberID=cursor.fetchone()[0]
+
+        cursor.execute("""
+        UPDATE MemberRanks SET RANK_ID = ? WHERE Member_ID = ?""",(new_rank_id,MemberID))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError as e:
+        print(f"Integrity error: {e}")
+        return False
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return False
+    finally:
+        conn.close()
+
+
 def get_ranks():
     try:
         conn = create_Database_connect()
