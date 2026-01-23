@@ -618,15 +618,19 @@ try:
 
             with st.expander("Add Club Members🧍"):
                 ok,current_members=db.return_club_members()
+                ranks = [rank.Name for rank in db.get_ranks()]
                 if ok and len(current_members)>0:
                     st.subheader("Club Members")
                     st.data_editor(current_members,
                                    column_config={'ID': None},
                                    hide_index=True)
                 Remove_Members_toggle=st.toggle("Remove Members")
+                Member_selections_options=st.segmented_control("Options",options=["Add Members","Remove Members","Promote Members"],default="Add Members")
+
+
                 if len(current_members)==0:
                     st.warning("No members found in the database please add one")
-                if Remove_Members_toggle and len(current_members)>0 :
+                if Member_selections_options=="Remove Members" and len(current_members)>0 :
                     with st.form("Remove Members",clear_on_submit=True):
                         members_to_remove=st.multiselect("Please select a member to remove",[""]+current_members['Name'],placeholder="Please select a member to remove")
                         remove_members_button=st.form_submit_button("Remove Members",type="primary",icon=":material/delete:")
@@ -639,11 +643,9 @@ try:
 
                             st.rerun()
 
-
-
-                else:
+                if Member_selections_options == "Add Members":
                     with st.form("Add Club Members",clear_on_submit=True):
-                        ranks=[rank.Name for rank in db.get_ranks()]
+
                         name=st.text_input("Please enter the Club Member name")
                         rank=st.selectbox("Please select a rank",options=ranks)
                         submitted_name=st.form_submit_button("Add Club Members",type="primary",icon=":material/add:")
@@ -653,6 +655,22 @@ try:
                             st.success(f"{name} has been successfully added to the database")
                             time.sleep(1.5)
                             st.rerun()
+
+
+                if Member_selections_options == "Promote Members":
+                    with st.form("Promote Members",clear_on_submit=True):
+                        member_to_Promote = st.multiselect("Please select a member to remove",[""] + current_members['Name'],placeholder="Please select a member to Promote")
+                        Promote_rank=st.selectbox("Please select which rank to promote member to",options=ranks)
+                        Promote_rank_Button=st.form_submit_button("Promote Members",type="primary",icon=":material/upgrade:")
+                        if Promote_rank_Button:
+                            for name in member_to_Promote:
+                                print(f"Promoting {name}")
+                                db.update_Members_ranks(name,Promote_rank)
+                                st.success(f"Removed {name} from the database")
+                                time.sleep(1.5)
+                            st.rerun()
+
+
 
 
 
