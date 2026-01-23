@@ -596,15 +596,22 @@ def get_ranks():
 
 
 
-def remove_member(Member_ID):
+def remove_member(Member_Name):
     try:
         conn = create_Database_connect()
         cursor = conn.cursor()
         cursor.execute("""
+        SELECT ID FROM Members WHERE Name = ?
+        
+        """,(Member_Name,))
+        member_ID=cursor.fetchone()[0]
+
+
+
+        cursor.execute("""
         DELETE FROM Members
         WHERE ID=?
-
-                       """,(Member_ID,))
+                       """,(member_ID,))
         conn.commit()
         return True
     except sqlite3.IntegrityError as e:

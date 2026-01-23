@@ -624,20 +624,19 @@ try:
                     st.data_editor(current_members,
                                    column_config={'ID': None},
                                    hide_index=True)
-                Remove_Members_toggle=st.toggle("Remove Members")
                 Member_selections_options=st.segmented_control("Options",options=["Add Members","Remove Members","Promote Members"],default="Add Members")
 
 
                 if len(current_members)==0:
-                    st.warning("No members found in the database please add one")
-                if Member_selections_options=="Remove Members" and len(current_members)>0 :
+                    st.warning("No members found in the database please add one !",icon=":material/warning:")
+                if Member_selections_options=="Remove Members" and len(current_members)>0:
                     with st.form("Remove Members",clear_on_submit=True):
                         members_to_remove=st.multiselect("Please select a member to remove",[""]+current_members['Name'],placeholder="Please select a member to remove")
                         remove_members_button=st.form_submit_button("Remove Members",type="primary",icon=":material/delete:")
                         if remove_members_button:
                             for name in members_to_remove:
-                                Member_ID=int(current_members.loc[current_members['Name']==name,'ID'].iloc[0])
-                                db.remove_member(Member_ID)
+                                #Member_ID=int(current_members.loc[current_members['Name']==name,'ID'].iloc[0])
+                                db.remove_member(name)
                                 st.success(f"Removed {name} from the database")
                                 time.sleep(1.5)
 
@@ -657,7 +656,7 @@ try:
                             st.rerun()
 
 
-                if Member_selections_options == "Promote Members":
+                if Member_selections_options == "Promote Members" and len(current_members)>0:
                     with st.form("Promote Members",clear_on_submit=True):
                         member_to_Promote = st.multiselect("Please select a member to remove",[""] + current_members['Name'],placeholder="Please select a member to Promote")
                         Promote_rank=st.selectbox("Please select which rank to promote member to",options=ranks)
