@@ -4,6 +4,18 @@ import json
 from dataclasses import dataclass,asdict
 from typing import Optional
 
+from matplotlib.style.core import available
+
+
+@dataclass
+class Member:
+    Name: Optional[str] = None
+    Rank: Optional[str] = None
+
+@dataclass
+class Ranks:
+    ID: Optional[int] = None
+    Name: Optional[str] = None
 
 
 def create_Database_connect():
@@ -474,14 +486,22 @@ def get_Ranks():
     conn.close()
     return ranks
 
-def add_members(MemberName):
+def add_members(MemberName,rank_id=1):
     try:
         conn = create_Database_connect()
-        conn.execute('PRAGMA foreign_keys = ON')
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO Members(Name) VALUES(?)
         """, (MemberName,))
+
+        assigned_member_id=cursor.lastrowid #Gets the last auto_generated_Id
+
+        cursor.execute("""
+        INSERT INTO MemberRanks(Member_ID,RANk_ID) VALUES(?,?)
+        
+        """,(assigned_member_id,rank_id))
+
+
         conn.commit()
         print(f"Added member: {MemberName}")
         return True
@@ -497,23 +517,17 @@ def add_members(MemberName):
 
 
 
-@dataclass
-class Member:
-    ID: Optional[int] = None
-    Name: Optional[str] = None
-
-
-
-
 def return_club_members():
     try:
         conn = create_Database_connect()
         cursor = conn.cursor()
         cursor.execute("""
-        SELECT ID,Name FROM Members
+        SELECT M.Name,R.RANK_Name FROM Members M
+        JOIN MemberRanks MR  ON M.ID = MR.Member_ID
+        JOIN Ranks R on MR.Rank_ID = R.ID
         
         """)
-        members=pl.DataFrame([asdict(Member(ID=member[0],Name=member[1])) for member in cursor.fetchall()])
+        members=pl.DataFrame([asdict(Member(Name=member[0],Rank=member[1])) for member in cursor.fetchall()])
         return True,members.to_pandas()
     except sqlite3.IntegrityError as e:
         print(f"Integrity error: {e}")
@@ -523,6 +537,31 @@ def return_club_members():
         return False
     finally:
         conn.close()
+
+
+def get_ranks():
+    try:
+        conn = create_Database_connect()
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT * FROM Ranks;
+        
+        """)
+        available_ranks=[Ranks(ID=ranks[0],Name=ranks[1]) for ranks in cursor.fetchall()]
+        return available_ranks
+
+
+
+    except sqlite3.IntegrityError as e:
+        print(f"Integrity error: {e}")
+        return False
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return False
+    finally:
+        conn.close()
+
+
 
 
 def remove_member(Member_ID):
@@ -544,3 +583,6 @@ def remove_member(Member_ID):
         return False
     finally:
         conn.close()
+
+
+
