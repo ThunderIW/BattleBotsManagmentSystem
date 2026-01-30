@@ -1,7 +1,22 @@
 import sqlite3
 import polars as pl
 import json
+from dataclasses import dataclass,asdict
+from typing import Optional
 
+from matplotlib.style.core import available
+
+
+@dataclass
+class Member:
+    Name: Optional[str] = None
+    Rank: Optional[str] = None
+    DateGiven: Optional[str] = None
+
+@dataclass
+class Ranks:
+    ID: Optional[int] = None
+    Name: Optional[str] = None
 
 
 def create_Database_connect():
@@ -459,6 +474,155 @@ def get_item_details(item_name):
     item_details = cursor.fetchone()
     conn.close()
     return item_details
+
+
+
+def get_Ranks():
+    conn=create_Database_connect()
+    cursor=conn.cursor()
+    cursor.execute("""
+    SELECT RANK_Name FROM Ranks
+    """)
+    ranks=cursor.fetchall()
+    conn.close()
+    return ranks
+
+def add_members(MemberName,rank_id=1):
+    try:
+        conn = create_Database_connect()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO Members(Name) VALUES(?)
+        """, (MemberName,))
+
+        assigned_member_id=cursor.lastrowid #Gets the last auto_generated_Id
+
+        cursor.execute("""
+        INSERT INTO MemberRanks(Member_ID,RANk_ID) VALUES(?,?)
+        
+        """,(assigned_member_id,rank_id))
+
+
+        conn.commit()
+        print(f"Added member: {MemberName}")
+        return True
+    except sqlite3.IntegrityError as e:
+        print(f"Integrity error: {e}")
+        return False
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+
+
+def return_club_members():
+    try:
+        conn = create_Database_connect()
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT M.Name,R.RANK_Name ,MR.Date_Given FROM Members M
+        JOIN MemberRanks MR  ON M.ID = MR.Member_ID
+        JOIN Ranks R on MR.Rank_ID = R.ID
+        
+        """)
+        members=pl.DataFrame([asdict(Member(Name=member[0],Rank=member[1],DateGiven=member[2])) for member in cursor.fetchall()])
+        return True,members.to_pandas()
+    except sqlite3.IntegrityError as e:
+        print(f"Integrity error: {e}")
+        return False
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+def update_Members_ranks(MemberName,new_rank):
+    try:
+        conn = create_Database_connect()
+        cursor = conn.cursor()
+
+
+        cursor.execute("""
+        SELECT ID FROM Ranks
+        WHERE RANK_NAME= ?
+        """,(new_rank,))
+        new_rank_id=cursor.fetchone()[0]
+
+
+        cursor.execute("""
+        SELECT ID FROM Members WHERE Name = ?
+        """,(MemberName,))
+        MemberID=cursor.fetchone()[0]
+
+        cursor.execute("""
+        UPDATE MemberRanks SET RANK_ID = ? WHERE Member_ID = ?""",(new_rank_id,MemberID))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError as e:
+        print(f"Integrity error: {e}")
+        return False
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+def get_ranks():
+    try:
+        conn = create_Database_connect()
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT * FROM Ranks;
+        
+        """)
+        available_ranks=[Ranks(ID=ranks[0],Name=ranks[1]) for ranks in cursor.fetchall()]
+        return available_ranks
+
+
+
+    except sqlite3.IntegrityError as e:
+        print(f"Integrity error: {e}")
+        return False
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+
+
+def remove_member(Member_Name):
+    try:
+        conn = create_Database_connect()
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT ID FROM Members WHERE Name = ?
+        
+        """,(Member_Name,))
+        member_ID=cursor.fetchone()[0]
+
+
+
+        cursor.execute("""
+        DELETE FROM Members
+        WHERE ID=?
+                       """,(member_ID,))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError as e:
+        print(f"Integrity error: {e}")
+        return False
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return False
+    finally:
+        conn.close()
 
 
 

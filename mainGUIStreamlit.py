@@ -13,6 +13,11 @@ from pathlib import Path
 from encrypt_file import encryptAndDecrypt
 import streamlit_shadcn_ui as ui
 
+if "Ranking_data" not in st.session_state:
+    st.session_state["Ranking_data"] = None
+
+
+
 def convert_to_string(removed_items:list):
     display_string=",".join(removed_items)
     return display_string
@@ -614,6 +619,66 @@ try:
                             #st.rerun()
 
 
+
+
+            with st.expander("Add Club Members🧍"):
+                ok,current_members=db.return_club_members()
+
+                ranks = [rank.Name for rank in db.get_ranks()]
+                if ok and len(current_members)>0:
+                    st.session_state.Ranking_data = current_members
+                    st.subheader("Club Members")
+                    st.data_editor(current_members,
+                                   column_config={'ID': None},
+                                   hide_index=True)
+
+
+                Member_selections_options=st.segmented_control("Options",options=["Add Members","Remove Members","Promote Members"],default="Add Members")
+
+
+                if len(current_members)==0:
+                    st.warning("No members found in the database please add one !",icon=":material/warning:")
+                if Member_selections_options=="Remove Members" and len(current_members)>0:
+                    with st.form("Remove Members",clear_on_submit=True):
+                        members_to_remove=st.multiselect("Please select a member to remove",[""]+current_members['Name'],placeholder="Please select a member to remove")
+                        remove_members_button=st.form_submit_button("Remove Members",type="primary",icon=":material/delete:")
+                        if remove_members_button:
+                            for name in members_to_remove:
+                                #Member_ID=int(current_members.loc[current_members['Name']==name,'ID'].iloc[0])
+                                db.remove_member(name)
+                                st.success(f"Removed {name} from the database")
+                                time.sleep(1.5)
+
+                            st.rerun()
+
+                if Member_selections_options == "Add Members":
+                    with st.form("Add Club Members",clear_on_submit=True):
+
+                        name=st.text_input("Please enter the Club Member name")
+                        rank=st.selectbox("Please select a rank",options=ranks)
+                        submitted_name=st.form_submit_button("Add Club Members",type="primary",icon=":material/add:")
+                        if submitted_name:
+                            selected_rank_ID=int(ranks.index(rank)+1)
+                            db.add_members(name,rank_id=selected_rank_ID)
+                            st.success(f"{name} has been successfully added to the database")
+                            time.sleep(1.5)
+                            st.rerun()
+
+
+                if Member_selections_options == "Promote Members" and len(current_members)>0:
+                    with st.form("Promote Members",clear_on_submit=True):
+                        member_to_Promote = st.multiselect("Please select a member to remove",[""] + current_members['Name'],placeholder="Please select a member to Promote")
+                        Promote_rank=st.selectbox("Please select which rank to promote member to",options=ranks)
+                        Promote_rank_Button=st.form_submit_button("Promote Members",type="primary",icon=":material/upgrade:")
+                        if Promote_rank_Button:
+                            for name in member_to_Promote:
+                                print(f"Promoting {name}")
+                                db.update_Members_ranks(name,Promote_rank)
+                                st.success(f"Removed {name} from the database")
+                                time.sleep(1.5)
+                            st.rerun()
+                st.download_button("Download Current ranking table", data=current_members.to_csv(index=False),
+                                   file_name="Ranking.csv", mime="text/csv", type="primary", icon=":material/download:")
 
 
 
