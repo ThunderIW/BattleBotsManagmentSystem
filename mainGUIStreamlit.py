@@ -13,6 +13,11 @@ from pathlib import Path
 from encrypt_file import encryptAndDecrypt
 import streamlit_shadcn_ui as ui
 
+if "Ranking_data" not in st.session_state:
+    st.session_state["Ranking_data"] = None
+
+
+
 def convert_to_string(removed_items:list):
     display_string=",".join(removed_items)
     return display_string
@@ -618,8 +623,10 @@ try:
 
             with st.expander("Add Club Members🧍"):
                 ok,current_members=db.return_club_members()
+
                 ranks = [rank.Name for rank in db.get_ranks()]
                 if ok and len(current_members)>0:
+                    st.session_state.Ranking_data = current_members
                     st.subheader("Club Members")
                     st.data_editor(current_members,
                                    column_config={'ID': None},
