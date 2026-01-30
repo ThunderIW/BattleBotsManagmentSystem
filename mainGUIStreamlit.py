@@ -624,6 +624,8 @@ try:
                     st.data_editor(current_members,
                                    column_config={'ID': None},
                                    hide_index=True)
+
+
                 Member_selections_options=st.segmented_control("Options",options=["Add Members","Remove Members","Promote Members"],default="Add Members")
 
 
@@ -668,9 +670,8 @@ try:
                                 st.success(f"Removed {name} from the database")
                                 time.sleep(1.5)
                             st.rerun()
-
-
-
+                st.download_button("Download Current ranking table", data=current_members.to_csv(index=False),
+                                   file_name="Ranking.csv", mime="text/csv", type="primary", icon=":material/download:")
 
 
 
