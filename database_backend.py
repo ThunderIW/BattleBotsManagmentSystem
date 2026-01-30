@@ -11,6 +11,7 @@ from matplotlib.style.core import available
 class Member:
     Name: Optional[str] = None
     Rank: Optional[str] = None
+    DateGiven: Optional[str] = None
 
 @dataclass
 class Ranks:
@@ -522,12 +523,12 @@ def return_club_members():
         conn = create_Database_connect()
         cursor = conn.cursor()
         cursor.execute("""
-        SELECT M.Name,R.RANK_Name FROM Members M
+        SELECT M.Name,R.RANK_Name ,MR.Date_Given FROM Members M
         JOIN MemberRanks MR  ON M.ID = MR.Member_ID
         JOIN Ranks R on MR.Rank_ID = R.ID
         
         """)
-        members=pl.DataFrame([asdict(Member(Name=member[0],Rank=member[1])) for member in cursor.fetchall()])
+        members=pl.DataFrame([asdict(Member(Name=member[0],Rank=member[1],DateGiven=member[2])) for member in cursor.fetchall()])
         return True,members.to_pandas()
     except sqlite3.IntegrityError as e:
         print(f"Integrity error: {e}")
